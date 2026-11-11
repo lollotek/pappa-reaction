@@ -1,0 +1,133 @@
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #1a1522;
+  font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
+  user-select: none;
+}
+
+#app {
+  position: fixed;
+  inset: 0;
+}
+
+#debug {
+  position: fixed;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 2px 6px;
+  font: 12px/1.4 monospace;
+  white-space: pre;
+  color: #fff;
+  background: rgb(0 0 0 / 0.5);
+  pointer-events: none;
+  z-index: 10;
+}
+
+.hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  color: #fff;
+  text-shadow:
+    2px 0 #000,
+    -2px 0 #000,
+    0 2px #000,
+    0 -2px #000;
+}
+
+.hud-panel {
+  position: absolute;
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  gap: 2px 10px;
+  padding: 10px 14px;
+}
+.hud-panel.tl {
+  top: 0;
+  left: 0;
+}
+.hud-panel.tr {
+  top: 0;
+  right: 0;
+}
+.hud-panel.bl {
+  bottom: 0;
+  left: 0;
+}
+.hud-panel.br {
+  bottom: 0;
+  right: 0;
+}
+
+.hud-badge {
+  grid-row: span 2;
+  padding: 6px 10px;
+  border: 3px solid #000;
+  border-radius: 12px;
+  background: var(--badge);
+  font-size: 22px;
+  font-weight: 900;
+}
+.hud-name {
+  font-size: 16px;
+  font-weight: 700;
+}
+.hud-score {
+  font-size: 28px;
+  font-weight: 900;
+  color: #ffe066;
+}
+.hud-key {
+  grid-column: span 2;
+  font-size: 12px;
+  opacity: 0.85;
+}
+.hud-key kbd {
+  padding: 0 5px;
+  border: 2px solid #fff;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 13px;
+  text-shadow: none;
+  background: rgb(0 0 0 / 0.4);
+}
+
+.hud-banner {
+  position: absolute;
+  top: 14%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: clamp(22px, 4vw, 52px);
+  font-weight: 900;
+  color: #ffb347;
+  white-space: nowrap;
+}
+
+.hud-bubble {
+  position: absolute;
+  left: 0;
+  top: 0;
+  padding: 4px 12px;
+  border: 3px solid var(--badge);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--badge);
+  font-size: 20px;
+  font-weight: 900;
+  text-shadow: none;
+  white-space: nowrap;
+}
+.hud-bubble.win {
+  background: #ffe066;
+  color: #000;
+}
+.hud-bubble.stun {
+  border-color: #000;
+  color: #000;
+  background: #ffd0d0;
+}
