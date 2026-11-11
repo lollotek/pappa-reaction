@@ -36,6 +36,8 @@ export class Hud {
   constructor(
     container: HTMLElement,
     private readonly slots: readonly PlayerSlot[],
+    /** Per ogni slot: etichetta CPU (es. "CPU normale") oppure null se umano. */
+    cpuLabels: readonly (string | null)[] = [],
   ) {
     this.root = document.createElement('div');
     this.root.className = 'hud';
@@ -50,8 +52,12 @@ export class Hud {
         <span class="hud-badge">P${i + 1}</span>
         <span class="hud-name">${slot.name}</span>
         <span class="hud-score">0</span>
-        <span class="hud-key">scatto <kbd>${keyLabel(slot.keys.dash)}</kbd>
-          finta <kbd>${keyLabel(slot.keys.fake)}</kbd></span>`;
+        <span class="hud-key">${
+          cpuLabels[i]
+            ? `<span class="hud-cpu">${cpuLabels[i]}</span>`
+            : `scatto <kbd>${keyLabel(slot.keys.dash)}</kbd>
+               finta <kbd>${keyLabel(slot.keys.fake)}</kbd>`
+        }</span>`;
       this.root.appendChild(panel);
       this.scores.push(panel.querySelector('.hud-score')!);
 

@@ -50,4 +50,33 @@ export const tuning = {
     { id: 'gamberetto', points: 5, weight: 5 },
     { id: 'cacchetta', points: 0, weight: 20 },
   ],
+  /** Profili CPU per difficoltà (vedi docs/GDD.md §8). Tempi in ms, probabilità 0..1. */
+  cpu: {
+    facile: {
+      reactionMeanMs: 450,
+      reactionSdMs: 90,
+      fooledByLid: 0.25,
+      fooledByFakeDash: 0.2,
+      recognizesPoop: 0.7,
+      fakeDashChance: 0.1,
+    },
+    normale: {
+      reactionMeanMs: 330,
+      reactionSdMs: 60,
+      fooledByLid: 0.12,
+      fooledByFakeDash: 0.1,
+      recognizesPoop: 0.85,
+      fakeDashChance: 0.3,
+    },
+    difficile: {
+      reactionMeanMs: 240,
+      reactionSdMs: 40,
+      fooledByLid: 0.05,
+      fooledByFakeDash: 0.04,
+      recognizesPoop: 0.95,
+      fakeDashChance: 0.5,
+    },
+  },
 } as const;
+
+export type Difficulty = keyof typeof tuning.cpu;

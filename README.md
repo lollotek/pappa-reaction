@@ -11,7 +11,7 @@ Minigioco di riflessi per 1–4 giocatori su tastiera, in Three.js: quattro gatt
 
 ## Stato
 
-M2 completata: regole complete in greybox (5 round, finte, cacchetta, spareggio). Prossimo passo: **M3 — CPU**.
+M3 completata: CPU con 3 difficoltà. Prossimo passo: **M4 — Grafica**.
 
 | Gatto    | Scatto | Finta |
 | -------- | ------ | ----- |
@@ -20,7 +20,15 @@ M2 completata: regole complete in greybox (5 round, finte, cacchetta, spareggio)
 | Poh      | `O`    | `L`   |
 | Margot   | `↑`    | `↓`   |
 
-`INVIO` a fine partita per la rivincita. `?seed=123` nell'URL rigioca una partita identica.
+`INVIO` a fine partita per la rivincita.
+
+Parametri URL (provvisori, finché non c'è il menu):
+
+- `?cpu=2,3,4` quali gatti sono CPU (default `2,3,4`: tu sei Priamo); `?cpu=none` tutti umani
+- `?diff=facile|normale|difficile` difficoltà CPU (default `normale`)
+- `?seed=123` rigioca una partita identica (CPU comprese)
+
+Esempio: `http://localhost:5173/?cpu=3,4&diff=difficile` → Priamo e Tempesta umani contro 2 CPU difficili.
 
 ## Comandi
 

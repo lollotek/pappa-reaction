@@ -135,7 +135,7 @@ Nota tecnica: molte tastiere hanno **ghosting** (alcune combinazioni di tasti pr
 
 ## 8. CPU
 
-Ogni slot non occupato da un umano è una CPU. Parametri per difficoltà:
+Ogni slot non occupato da un umano è una CPU. La CPU usa le stesse regole e lo stesso cronometro degli umani: reagisce solo dal frame in cui il coperchio aperto è a schermo, con un tempo di reazione casuale (distribuzione normale, minimo 140 ms). Parametri per difficoltà (in `tuning.cpu`):
 
 | Parametro                           | Facile | Normale | Difficile |
 | ----------------------------------- | ------ | ------- | --------- |

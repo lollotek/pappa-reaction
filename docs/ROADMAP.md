@@ -31,9 +31,10 @@ src/
     Rng.ts                random con seed (replay e test riproducibili)
   input/
     Keyboard.ts           keydown con timestamp ad alta precisione, ignora auto-repeat
-    PlayerInput.ts        astrazione comune umano/CPU (eventi DASH / FAKE)
   ai/
     CpuPlayer.ts          reazioni, abboccamenti alle finte, uso finte
+  game/
+    MatchDriver.ts        unisce input umani e CPU in ordine di tempo; usato dal gioco e dalle simulazioni
   render/
     PixelRenderer.ts      render target a bassa risoluzione + upscale nearest
     Arena.ts              pista, ciotola, coperchio, ambiente
@@ -97,11 +98,14 @@ tests/
 
 ### M3 — CPU
 
-- [ ] `CpuPlayer` con i parametri per difficoltà del GDD
-- [ ] Reazione alle finte del coperchio e degli avversari
-- [ ] CPU che usa la finta di scatto
-- [ ] Partita 1 umano vs 3 CPU bilanciata
-- **Fatto quando**: in singolo si vince/perde in modo credibile a ogni difficoltà.
+- [x] `CpuPlayer` con i profili del GDD (`tuning.cpu`): reazione con distribuzione normale (minimo 140 ms), parte dal frame in cui il coperchio è a schermo come per gli umani
+- [x] Abbocca alle finte del coperchio e alle finte di scatto degli avversari (umani o CPU); riconosce la cacchetta secondo il profilo
+- [x] Usa la finta di scatto; se è stordita al reveal riprova appena può
+- [x] `MatchDriver`: unico punto che unisce tasti e CPU in ordine di tempo (i tasti di uno slot CPU sono ignorati)
+- [x] Setup provvisorio da URL in attesa del menu M6: `?cpu=2,3,4&diff=normale` (default: P1 umano contro 3 CPU normali)
+- [x] Test: comportamento CPU, distribuzione dei tempi, simulazione di partite intere a 60 Hz, difficoltà più alta vince più spesso
+- **Fatto quando**: in singolo si vince/perde in modo credibile a ogni difficoltà. ✅ logica (2026-11-11) — _da confermare con playtest umano_
+- **Dato di bilanciamento** (300 partite simulate, facile/normale/difficile/normale): la difficile vince il 96%, le normali il 4% insieme, la facile mai; false partenze per partita 1.9 / 0.9 / 0.35; spareggi nel 3% delle partite. Con le medie attuali (450/330/240 ms) vince quasi sempre la più veloce: da tarare nel playtest (es. medie più vicine o più inganni ad alta difficoltà).
 
 ### M4 — Grafica
 

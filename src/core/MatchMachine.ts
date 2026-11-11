@@ -17,6 +17,14 @@ export type { BowlContent, FakeLidConfig } from './Referee';
 export type Phase = 'intro' | 'circling' | 'dash' | 'resolve' | 'end' | 'final';
 export type PlayerAction = 'dash' | 'fake';
 
+/** Pressione di un giocatore (umano o CPU) con il suo istante esatto. */
+export interface TimedInput {
+  player: number;
+  action: PlayerAction;
+  /** Stesso orologio di `performance.now()` / `KeyboardEvent.timeStamp`. */
+  t: number;
+}
+
 export interface MatchConfig {
   playerCount: number;
   /** Round regolari; poi eventuale spareggio. */

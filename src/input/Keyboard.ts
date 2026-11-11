@@ -1,12 +1,7 @@
 import type { PlayerSlot } from '../config/controls';
-import type { PlayerAction } from '../core/MatchMachine';
+import type { PlayerAction, TimedInput } from '../core/MatchMachine';
 
-export interface TimedInput {
-  player: number;
-  action: PlayerAction;
-  /** `KeyboardEvent.timeStamp`: stesso orologio di `performance.now()`. */
-  t: number;
-}
+export type { TimedInput } from '../core/MatchMachine';
 
 /**
  * Raccoglie le pressioni dei tasti di gioco con il loro timestamp preciso.
