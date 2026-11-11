@@ -24,10 +24,10 @@ src/
     tuning.ts             tutti i parametri di bilanciamento
     controls.ts           mappa tasti per giocatore
   core/                   logica pura, niente Three.js
-    GameState.ts          punteggi, round, giocatori in panchina
-    RoundMachine.ts       state machine del round (INTRO→CIRCLING→REVEAL→DASH→RESOLVE→END)
+    MatchMachine.ts       partita: round (INTRO→CIRCLING→DASH→RESOLVE→END), punteggi,
+                          panchina, cacchetta, spareggio, classifica (FINAL)
+    matchConfig.ts        converte tuning (s) in config della macchina (ms)
     Referee.ts            sceglie timing reveal, finte del coperchio, contenuto
-    Resolver.ts           calcolo vincitore, pareggi, penalità
     Rng.ts                random con seed (replay e test riproducibili)
   input/
     Keyboard.ts           keydown con timestamp ad alta precisione, ignora auto-repeat
@@ -49,14 +49,14 @@ src/
 assets/
   sprites/ textures/ audio/ fonts/
 tests/
-  Resolver.test.ts, RoundMachine.test.ts, ...
+  MatchMachine.test.ts, Referee.test.ts, ...
 ```
 
 ### Note tecniche chiave
 
 - **Misura del tempo di reazione**: `t0` = timestamp del primo frame in cui il coperchio è visibilmente aperto (callback di `requestAnimationFrame`); `t_press` = `KeyboardEvent.timeStamp`. Entrambi sono sullo stesso orologio di `performance.now()`. Ignorare `event.repeat`.
 - **Game loop**: logica a timestep fisso (es. 120 Hz) disaccoppiata dal rendering; gli input vengono accodati con il loro timestamp e processati dalla logica.
-- **Risultato indipendente dall'animazione**: il Resolver decide il vincitore appena la finestra `DASH` si chiude (o appena tutti hanno premuto); le animazioni mostrano solo l'esito.
+- **Risultato indipendente dall'animazione**: la MatchMachine decide il vincitore appena la finestra `DASH` si chiude (o appena tutti hanno premuto); le animazioni mostrano solo l'esito.
 - **Pixel look**: il canvas WebGL ha risoluzione interna di ~270 righe (larghezza in base allo schermo) e viene ingrandito via CSS con `image-rendering: pixelated` e **scala intera** (`src/render/pixelLayout.ts`), così ogni pixel di gioco ha la stessa dimensione. Se serviranno effetti post-processing (contorni, palette) si passerà a un `WebGLRenderTarget`; texture con `magFilter = NearestFilter`, niente mipmap; camera prospettica a FOV basso (o ortografica) per un 2.5D pulito.
 - **Low poly + sprite**: gatti, pista, ciotola, coperchio e mano sono mesh low poly (`flatShading`, palette limitata); i decori sono sprite 2D billboard che ruotano solo sull'asse Y verso la camera.
 - **Grafica generativa prima**: geometrie e texture create via codice (primitive Three.js, `CanvasTexture`), così non serve nessun asset esterno per iniziare. Ogni generatore espone parametri (colori, proporzioni) per poterlo correggere a mano in seguito.
@@ -81,16 +81,19 @@ tests/
 - [x] Falsa partenza anticipata da M2: bonk + stordimento 1.5 s (premere prima che il coperchio sia a schermo conta come falsa partenza)
 - [x] HUD: punteggi agli angoli, banner round/risultato, nuvolette con il tempo sopra i gatti; overlay debug (F3) con fase e seed
 - [x] Test unitari su RoundMachine e Rng
-- **Fatto quando**: 2–4 persone possono giocare round infiniti e vedere chi è più veloce. *Primo playtest: il nucleo è divertente?*
+- **Fatto quando**: 2–4 persone possono giocare round infiniti e vedere chi è più veloce. _Primo playtest: il nucleo è divertente?_
 
 ### M2 — Regole complete
 
-- [ ] 5 round, classifica finale
-- [ ] Finte del coperchio (Referee)
-- [ ] Finta di scatto (tasto secondario, cooldown)
-- [ ] Cacchetta + salto del turno successivo
-- [ ] Test unitari per le nuove regole (RNG con seed già pronto)
-- **Fatto quando**: tutte le regole del GDD funzionano in greybox e sono coperte da test.
+- [x] 5 round, classifica finale, rivincita con INVIO
+- [x] Spareggio a morte improvvisa tra i leader, senza cacchetta
+- [x] Finte del coperchio pianificate dal `Referee` (più frequenti nei round finali); chi abbocca fa falsa partenza
+- [x] Finta di scatto (tasto secondario): identica allo scatto per 150 ms, solo durante il giro, cooldown 1 s
+- [x] Cacchetta: chi scatta salta il round successivo (in panchina con nuvoletta); al round 5 −1 punto
+- [x] Seed da URL (`?seed=123`) per rigiocare una partita identica
+- [x] 34 test unitari (MatchMachine, Referee, Rng, layout, loop)
+- **Fatto quando**: tutte le regole del GDD funzionano in greybox e sono coperte da test. ✅ (2026-11-11)
+- Nota: l'indizio sonoro della finta del coperchio (la musica continua) arriva con l'audio in M5.
 
 ### M3 — CPU
 

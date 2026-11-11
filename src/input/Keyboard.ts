@@ -1,5 +1,5 @@
 import type { PlayerSlot } from '../config/controls';
-import type { PlayerAction } from '../core/RoundMachine';
+import type { PlayerAction } from '../core/MatchMachine';
 
 export interface TimedInput {
   player: number;

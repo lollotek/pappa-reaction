@@ -1,9 +1,9 @@
 import './style.css';
 import { playerSlots } from './config/controls';
 import { tuning } from './config/tuning';
-import { createRoundConfig } from './core/roundConfig';
+import { createMatchConfig } from './core/matchConfig';
+import { MatchMachine } from './core/MatchMachine';
 import { Rng } from './core/Rng';
-import { RoundMachine } from './core/RoundMachine';
 import { Keyboard } from './input/Keyboard';
 import { Hud } from './render/Hud';
 import { PixelRenderer } from './render/PixelRenderer';
@@ -18,12 +18,22 @@ pixel.attachCamera(scene.camera);
 const hud = new Hud(app, playerSlots);
 const keyboard = new Keyboard(playerSlots);
 
-const seed = Date.now() >>> 0;
-const machine = new RoundMachine(
-  createRoundConfig(playerSlots.length),
-  new Rng(seed),
-  performance.now(),
-);
+// Seed da URL (?seed=123) per rigiocare una partita identica, altrimenti casuale.
+const seedParam = Number(new URLSearchParams(location.search).get('seed'));
+let seed = 0;
+let machine!: MatchMachine;
+
+function newMatch(t: number, fixedSeed?: number): void {
+  seed = (fixedSeed ?? Math.random() * 2 ** 32) >>> 0;
+  machine = new MatchMachine(createMatchConfig(playerSlots.length), new Rng(seed), t);
+  scene.reset();
+  hud.reset();
+}
+newMatch(performance.now(), seedParam || undefined);
+
+window.addEventListener('keydown', (e) => {
+  if (e.code === 'Enter' && machine.phase === 'final') newMatch(e.timeStamp);
+});
 
 // Overlay di debug (attiva/disattiva con F3).
 const debug = document.getElementById('debug')!;
@@ -71,8 +81,8 @@ function frame(now: number): void {
     const left = Math.max(0, machine.phaseEndsAt() - now);
     debug.textContent =
       `${fps} fps · ${l.width}×${l.height} ×${l.scale} · seed ${seed}\n` +
-      `round ${machine.round} · ${machine.phase} · ${Number.isFinite(left) ? (left / 1000).toFixed(2) + 's' : '…'}` +
-      ` · ${machine.content.id}`;
+      `round ${machine.round}${machine.suddenDeath ? ' (spareggio)' : ''} · ${machine.phase} · ` +
+      `${Number.isFinite(left) ? (left / 1000).toFixed(2) + 's' : '…'} · ${machine.content.id}`;
   }
   requestAnimationFrame(frame);
 }

@@ -60,7 +60,9 @@ TITOLO → SELEZIONE (umano/CPU per slot, difficoltà) → INTRO PARTITA
 
 ### 5.2 Fine partita
 
-Dopo il round 5: classifica, il gatto vincitore fa un'animazione di festa. In caso di parità di punti → _domanda aperta_ (pari merito oppure round di spareggio "morte improvvisa").
+Dopo il round 5: classifica, il gatto vincitore fa festa sopra il coperchio. `INVIO` avvia la rivincita.
+
+**Spareggio a morte improvvisa**: se dopo il round 5 più gatti sono primi a pari punti, si giocano round extra **solo tra i gatti in testa** (gli altri restano fuori), **senza cacchetta**, finché uno resta da solo in testa. Un pareggio entro la soglia nello spareggio divide i punti e quindi fa ripetere il round.
 
 ## 6. Meccaniche
 
@@ -164,4 +166,4 @@ Ogni slot non occupato da un umano è una CPU. Parametri per difficoltà:
 
 Tutti i valori sono in un file `src/config/tuning.ts` per poterli regolare durante i playtest:
 
-`roundCount=5`, `stunDuration=1.5s`, `circlingMin=2.5s`, `circlingMax=7s`, `revealWindow=1.5s`, `tieThreshold=30ms`, `fakeLidMaxPerRound=2`, `fakeDashCooldown=1s`, `poopChance=0.2`, probabilità cibi, parametri CPU.
+`roundCount=5`, `stunDuration=1.5s`, `circlingMin=2.5s`, `circlingMax=7s`, `revealWindow=1.5s`, `tieThreshold=30ms`, `fakeDashCooldown=1s`, `lastRoundPoopPenalty=-1`; finte del coperchio (`maxPerRound=2`, probabilità 35% +10% a round, durata 0.45 s, distanza minima 0.7 s, mai nei primi 0.6 s né negli ultimi 0.8 s del giro); pesi dei contenuti (cacchetta 20%); parametri CPU.

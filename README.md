@@ -11,9 +11,16 @@ Minigioco di riflessi per 1–4 giocatori su tastiera, in Three.js: quattro gatt
 
 ## Stato
 
-M1 completata: prototipo greybox giocabile. Prossimo passo: **M2 — Regole complete**.
+M2 completata: regole complete in greybox (5 round, finte, cacchetta, spareggio). Prossimo passo: **M3 — CPU**.
 
-Tasti di scatto: Priamo `Q`, Tempesta `T`, Poh `O`, Margot `↑`.
+| Gatto    | Scatto | Finta |
+| -------- | ------ | ----- |
+| Priamo   | `Q`    | `A`   |
+| Tempesta | `T`    | `G`   |
+| Poh      | `O`    | `L`   |
+| Margot   | `↑`    | `↓`   |
+
+`INVIO` a fine partita per la rivincita. `?seed=123` nell'URL rigioca una partita identica.
 
 ## Comandi
 
