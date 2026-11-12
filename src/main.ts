@@ -1,27 +1,22 @@
 import '@fontsource/pixelify-sans/400.css';
 import '@fontsource/pixelify-sans/700.css';
 import './style.css';
-import { CpuPlayer } from './ai/CpuPlayer';
 import { AudioEngine } from './audio/AudioEngine';
-import { GameAudio } from './audio/GameAudio';
-import { musicTempo } from './audio/notes';
 import { playerSlots } from './config/controls';
 import { parseMatchSetup } from './config/matchSetup';
+import { loadSettings, type KeyValueStore } from './config/settings';
 import { tuning } from './config/tuning';
-import { createMatchConfig } from './core/matchConfig';
-import { MatchMachine } from './core/MatchMachine';
-import { Rng } from './core/Rng';
-import { MatchDriver } from './game/MatchDriver';
+import { App } from './game/App';
 import { Keyboard } from './input/Keyboard';
-import { Hud } from './render/Hud';
 import { PixelRenderer } from './render/PixelRenderer';
 import { MatchScene } from './scenes/MatchScene';
 import { Showroom } from './scenes/Showroom';
 
-const app = document.getElementById('app');
-if (!app) throw new Error('#app mancante');
+const container = document.getElementById('app');
+if (!container) throw new Error('#app mancante');
 
-const pixel = new PixelRenderer(app, tuning.render.targetHeight);
+const pixel = new PixelRenderer(container, tuning.render.targetHeight);
+const params = new URLSearchParams(location.search);
 
 // Overlay di debug (attiva/disattiva con F3).
 const debug = document.getElementById('debug')!;
@@ -36,11 +31,11 @@ window.addEventListener('keydown', (e) => {
 });
 
 // Vetrina dei gatti (?vetrina): modelli e pose da vicino, per la revisione grafica.
-if (new URLSearchParams(location.search).has('vetrina')) startShowroom(app);
-else startMatch(app);
+if (params.has('vetrina')) startShowroom(container);
+else startGame(container);
 
-function startShowroom(container: HTMLElement): void {
-  const showroom = new Showroom(playerSlots, container);
+function startShowroom(root: HTMLElement): void {
+  const showroom = new Showroom(playerSlots, root);
   pixel.attachCamera(showroom.camera);
   const loop = (now: number) => {
     showroom.update(now);
@@ -50,90 +45,54 @@ function startShowroom(container: HTMLElement): void {
   requestAnimationFrame(loop);
 }
 
-function startMatch(container: HTMLElement): void {
+function startGame(root: HTMLElement): void {
+  const store = safeStorage();
+  const settings = loadSettings(store, playerSlots);
   const scene = new MatchScene(playerSlots);
   pixel.attachCamera(scene.camera);
-  // Chi gioca: parametri URL provvisori (?cpu=2,3,4&diff=normale&seed=123), vedi matchSetup.ts.
-  const setup = parseMatchSetup(location.search, playerSlots.length);
-  const hud = new Hud(
-    container,
-    playerSlots,
-    setup.cpu.map((isCpu) => (isCpu ? `CPU ${setup.difficulty}` : null)),
-  );
-  const keyboard = new Keyboard(playerSlots);
-
-  // Audio sintetizzato; la musica si ferma al reveal (l'indizio contro le finte del coperchio).
   const audio = new AudioEngine();
-  const gameAudio = new GameAudio(audio, { hiccupOnFakeLid: setup.difficulty === 'difficile' });
-
-  let seed = 0;
-  let machine!: MatchMachine;
-  let driver!: MatchDriver;
-
-  const newMatch = (t: number, fixedSeed?: number) => {
-    seed = (fixedSeed ?? Math.random() * 2 ** 32) >>> 0;
-    machine = new MatchMachine(createMatchConfig(playerSlots.length), new Rng(seed), t);
-    // Ogni CPU ha il suo Rng derivato dal seed: la stessa partita si può rigiocare.
-    const cpus = setup.cpu.flatMap((isCpu, p) =>
-      isCpu ? [new CpuPlayer(p, tuning.cpu[setup.difficulty], new Rng(seed + 7919 * (p + 1)))] : [],
-    );
-    driver = new MatchDriver(machine, cpus);
-    scene.reset();
-    hud.reset();
-  };
-  newMatch(performance.now(), setup.seed);
-
-  window.addEventListener('keydown', (e) => {
-    if (e.code === 'Enter' && machine.phase === 'final') newMatch(e.timeStamp);
+  const keyboard = new Keyboard(settings.keys);
+  const app = new App({
+    container: root,
+    slots: playerSlots,
+    scene,
+    pixel,
+    audio,
+    keyboard,
+    store,
+    settings,
   });
 
-  const refreshAudio = () => {
-    hud.setAudioStatus(!audio.ready ? 'locked' : audio.muted ? 'off' : 'on');
-    // Audio sbloccato a giro già iniziato: la musica parte subito.
-    if (audio.ready && machine.phase === 'circling' && !audio.musicPlaying) {
-      audio.startMusic(musicTempo(machine.round, machine.suddenDeath));
-    }
-  };
+  // Parametri di sviluppo (?cpu=2,3,4&diff=normale&seed=123): si salta il menu.
+  if (params.has('cpu') || params.has('diff') || params.has('seed')) {
+    const setup = parseMatchSetup(location.search, playerSlots.length);
+    app.startDirect({
+      players: setup.cpu.map((c) => (c ? 'cpu' : 'human')),
+      difficulty: setup.difficulty,
+      seed: setup.seed,
+    });
+  } else {
+    app.start();
+  }
+
   // Solo in sviluppo: accesso da console per test e debug.
   if (import.meta.env.DEV) {
     Object.assign(window, {
       __pappa: {
+        app,
         audio,
         get machine() {
-          return machine;
+          return app.currentSession?.machine;
         },
       },
     });
   }
-  audio.onChange(refreshAudio);
-  refreshAudio();
-  window.addEventListener('keydown', (e) => {
-    if (e.code === 'KeyM' && !e.repeat) audio.toggleMute();
-  });
 
   let fpsFrames = 0;
   let fpsSince = performance.now();
   let fps = 0;
-
   const frame = (now: number) => {
-    // 1. Input umani e CPU in ordine di tempo: ogni pressione vale al suo istante esatto.
-    const events = driver.step(now, keyboard.drain());
-
-    // 2. Eventi della logica → animazioni e HUD.
-    for (const e of events) {
-      scene.onEvent(e);
-      hud.onEvent(e, machine);
-      gameAudio.onEvent(e, machine);
-    }
-
-    // 3. Rendering.
-    scene.update(now, machine);
-    pixel.render(scene.scene, scene.camera);
-    hud.update(now, machine, scene, pixel.layout);
-
-    // 4. Il primo frame che mostra il coperchio aperto è il t0 delle reazioni
-    //    (per umani e CPU, che reagiscono solo da qui in poi).
-    driver.afterRender(now, scene.lidIsOpen);
+    app.frame(now);
 
     fpsFrames++;
     if (now - fpsSince >= 500) {
@@ -141,15 +100,26 @@ function startMatch(container: HTMLElement): void {
       fpsFrames = 0;
       fpsSince = now;
     }
-    if (showDebug) {
+    const session = app.currentSession;
+    if (showDebug && session) {
+      const m = session.machine;
       const l = pixel.layout;
-      const left = Math.max(0, machine.phaseEndsAt() - now);
+      const left = Math.max(0, m.phaseEndsAt() - session.clock.now(now));
       debug.textContent =
-        `${fps} fps · ${l.width}×${l.height} ×${l.scale} · seed ${seed}\n` +
-        `round ${machine.round}${machine.suddenDeath ? ' (spareggio)' : ''} · ${machine.phase} · ` +
-        `${Number.isFinite(left) ? (left / 1000).toFixed(2) + 's' : '…'} · ${machine.content.id}`;
+        `${fps} fps · ${l.width}×${l.height} ×${l.scale} · seed ${session.seed}\n` +
+        `round ${m.round}${m.suddenDeath ? ' (spareggio)' : ''} · ${m.phase} · ` +
+        `${Number.isFinite(left) ? (left / 1000).toFixed(2) + 's' : '…'} · ${m.content.id}` +
+        (session.paused ? ' · PAUSA' : '');
     }
     requestAnimationFrame(frame);
   };
   requestAnimationFrame(frame);
+}
+
+function safeStorage(): KeyValueStore | null {
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
 }

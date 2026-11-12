@@ -35,6 +35,13 @@ src/
     CpuPlayer.ts          reazioni, abboccamenti alle finte, uso finte
   game/
     MatchDriver.ts        unisce input umani e CPU in ordine di tempo; usato dal gioco e dalle simulazioni
+    MatchSession.ts       una partita (macchina, CPU, HUD, audio) con orologio in pausa; anche la demo
+    GameClock.ts          tempo di gioco che si ferma in pausa
+    App.ts                schermate: titolo, setup, comandi, prova tasti, opzioni, regole, pausa
+  ui/
+    MenuModel.ts          logica dei menu da tastiera (voci, scelte, cursori, cattura tasto)
+    MenuView.ts           pannello DOM, anche col mouse
+    KeyTest.ts            prova tasti per il ghosting
   render/
     PixelRenderer.ts      render target a bassa risoluzione + upscale nearest
     Arena.ts              pista, ciotola, coperchio, ambiente
@@ -50,7 +57,8 @@ src/
     notes.ts              spartito e tempo per round (logica pura)
     GameAudio.ts          eventi della partita → suoni
   scenes/
-    TitleScene.ts, SetupScene.ts, MatchScene.ts, ResultsScene.ts
+    MatchScene.ts         scena 3D condivisa da partite e demo
+    Showroom.ts           vetrina dei gatti (?vetrina)
 assets/
   sprites/ textures/ audio/ fonts/
 tests/
@@ -133,15 +141,22 @@ tests/
 - [x] Miagolio sintetico per gatto (altezza diversa) in tre umori: contento, seccato, triste
 - [x] Sblocco audio al primo tasto (regola dei browser), `M` attiva/disattiva, scelta salvata nel browser; indicatore nell'HUD
 - [x] Test: spartito, tempi, mappatura eventi → suoni (56 test in totale)
-- [ ] Volume separato musica/effetti → spostato nel menu opzioni di M6
+- [x] Volume separato musica/effetti → nel menu Opzioni (M6)
 
 ### M6 — Menu e flusso
 
-- [ ] Schermata titolo
-- [ ] Setup: per ogni gatto scelta Umano/CPU, difficoltà CPU
-- [ ] Test tasti (verifica ghosting) e rimappatura
-- [ ] Pausa, risultati, rivincita
-- [ ] Tutorial rapido / schermata regole
+- [x] Titolo con una partita dimostrativa tra 4 CPU sullo sfondo (muta, senza HUD, ricomincia da sola)
+- [x] Nuova partita: Umano/CPU per ogni gatto, difficoltà CPU, round 3/5/7; mostra i tasti dei giocatori umani
+- [x] Comandi: rimappatura per gatto e azione (tasto già usato → scambio; INVIO, ESC, M, F3, TAB riservati), ripristino predefiniti
+- [x] Prova tasti: i tasti premuti si accendono, conta il massimo premuto insieme (ghosting)
+- [x] Opzioni: volume musica ed effetti (0–10), audio sì/no, arbitro normale/furbo (singhiozzo della musica alle finte)
+- [x] Regole in una schermata
+- [x] Pausa con ESC: il tempo di gioco si ferma (`GameClock`), l'audio si sospende, i tasti dei gatti sono ignorati; Riprendi / Ricomincia / Torna al menu
+- [x] Fine partita: INVIO rivincita, ESC menu
+- [x] Impostazioni salvate nel browser (`config/settings.ts`), con valori non validi riportati ai predefiniti
+- [x] Menu usabili da tastiera e mouse; font pixel senza legature ("finta" si leggeva "Anta"), tasti in font monospaziato
+- [x] Parametri URL di sviluppo (`?cpu=…&diff=…&seed=…`) ora saltano il menu
+- [x] Test: impostazioni e rimappatura, orologio di gioco, logica dei menu (68 test in totale)
 
 ### M7 — Rifinitura e rilascio
 

@@ -40,6 +40,10 @@ export class AudioEngine implements AudioOut {
   private ctx: AudioContext | null = null;
   private master!: GainNode;
   private sfxBus!: GainNode;
+  private musicBus!: GainNode;
+  private volumes = { music: 0.7, sfx: 0.8 };
+  /** In pausa il contesto resta sospeso anche se si premono tasti. */
+  private pausedByGame = false;
   private synth!: Synth;
   private music!: Music;
   private _muted = readMuted();
@@ -52,6 +56,11 @@ export class AudioEngine implements AudioOut {
   }
 
   /** true quando il browser ha concesso l'audio. */
+  /** true dopo la prima interazione (il browser ha permesso di creare l'audio). */
+  get unlocked(): boolean {
+    return this.ctx !== null;
+  }
+
   get musicPlaying(): boolean {
     return this.ctx !== null && this.music.playing;
   }
@@ -224,6 +233,30 @@ export class AudioEngine implements AudioOut {
     osc.stop(t + dur + 0.02);
   }
 
+  /** Volumi da 0 a 10 (menu Opzioni). */
+  setVolumes(music: number, sfx: number): void {
+    this.volumes = { music: music / 10, sfx: sfx / 10 };
+    this.applyVolumes();
+  }
+
+  /** Pausa: congela musica ed effetti esattamente dove sono. */
+  suspend(): void {
+    this.pausedByGame = true;
+    if (this.ctx?.state === 'running') void this.ctx.suspend();
+  }
+
+  resume(): void {
+    this.pausedByGame = false;
+    if (this.ctx?.state === 'suspended') void this.ctx.resume();
+  }
+
+  private applyVolumes(): void {
+    if (!this.ctx) return;
+    // La musica ha un tetto più basso: deve stare sotto agli effetti.
+    this.musicBus.gain.value = this.volumes.music * 0.9;
+    this.sfxBus.gain.value = this.volumes.sfx * 1.1;
+  }
+
   private unlock(): void {
     if (!this.ctx) {
       const ctx = new AudioContext({ latencyHint: 'interactive' });
@@ -231,17 +264,19 @@ export class AudioEngine implements AudioOut {
       this.master = ctx.createGain();
       this.master.gain.value = this._muted ? 0 : 0.8;
       this.master.connect(ctx.destination);
-      const musicBus = ctx.createGain();
-      musicBus.gain.value = 0.7;
-      musicBus.connect(this.master);
+      this.musicBus = ctx.createGain();
+      this.musicBus.connect(this.master);
       this.sfxBus = ctx.createGain();
       this.sfxBus.connect(this.master);
+      this.applyVolumes();
       this.synth = new Synth(ctx, this.sfxBus);
-      this.music = new Music(this.synth, musicBus);
+      this.music = new Music(this.synth, this.musicBus);
       ctx.onstatechange = () => this.notify();
+      this.notify(); // appena sbloccato (può nascere già "running", senza statechange)
     }
-    if (this.ctx.state === 'suspended') void this.ctx.resume();
-    this.notify();
+    // Avvisa solo quando cambia qualcosa: i cambi di stato del contesto
+    // arrivano già da `onstatechange` (avvisare a ogni tasto o clic ridisegnava i menu).
+    if (this.ctx.state === 'suspended' && !this.pausedByGame) void this.ctx.resume();
   }
 
   private notify(): void {

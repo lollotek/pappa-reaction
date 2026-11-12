@@ -2,13 +2,13 @@ import { tuning } from '../config/tuning';
 import type { MatchConfig } from './MatchMachine';
 
 /** Converte i parametri di `tuning` (secondi) nella config della MatchMachine (ms). */
-export function createMatchConfig(playerCount: number): MatchConfig {
+export function createMatchConfig(playerCount: number, roundCount?: number): MatchConfig {
   const r = tuning.round;
   const f = tuning.fakeLid;
   const s = 1000;
   return {
     playerCount,
-    roundCount: r.count,
+    roundCount: roundCount ?? r.count,
     introMs: r.introDuration * s,
     circlingMinMs: r.circlingMin * s,
     circlingMaxMs: r.circlingMax * s,

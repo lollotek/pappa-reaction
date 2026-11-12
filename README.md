@@ -11,7 +11,11 @@ Minigioco di riflessi per 1–4 giocatori su tastiera, in Three.js: quattro gatt
 
 ## Stato
 
-M5 completata: musica ed effetti sintetizzati. Prossimo passo: **M6 — Menu e flusso**.
+M6 completata: menu, pausa, impostazioni salvate. Prossimo passo: **M7 — Rifinitura e rilascio**.
+
+## Come si gioca
+
+Dal titolo scegli **Gioca**, decidi chi è umano e chi CPU, poi **Inizia!**. Tasti predefiniti (si cambiano in **Comandi**):
 
 | Gatto    | Scatto | Finta |
 | -------- | ------ | ----- |
@@ -20,16 +24,13 @@ M5 completata: musica ed effetti sintetizzati. Prossimo passo: **M6 — Menu e f
 | Poh      | `O`    | `L`   |
 | Margot   | `↑`    | `↓`   |
 
-`INVIO` a fine partita per la rivincita. `M` attiva/disattiva l'audio (il browser lo sblocca alla prima pressione di un tasto).
+`ESC` pausa · `INVIO` rivincita a fine partita · `M` audio sì/no (il browser lo sblocca alla prima pressione di un tasto).
 
-Parametri URL (provvisori, finché non c'è il menu):
+### Parametri URL per lo sviluppo
 
-- `?cpu=2,3,4` quali gatti sono CPU (default `2,3,4`: tu sei Priamo); `?cpu=none` tutti umani
-- `?diff=facile|normale|difficile` difficoltà CPU (default `normale`)
-- `?seed=123` rigioca una partita identica (CPU comprese)
+- `?cpu=2,3,4&diff=normale&seed=123` salta il menu e avvia subito una partita (`cpu=none` tutti umani; `seed` rigioca una partita identica)
 - `?vetrina` mostra i 4 gatti da vicino per rivedere modelli e pose (←/→ posa, SPAZIO rotazione, A automatico)
-
-Esempio: `http://localhost:5173/?cpu=3,4&diff=difficile` → Priamo e Tempesta umani contro 2 CPU difficili.
+- `F3` overlay di debug; in sviluppo `window.__pappa` dà accesso a partita e audio dalla console
 
 ## Comandi
 

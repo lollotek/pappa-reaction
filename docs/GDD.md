@@ -43,9 +43,12 @@ Le statistiche dei gatti sono **identiche** (solo estetica), per mantenere il gi
 ## 5. Flusso di una partita
 
 ```
-TITOLO → SELEZIONE (umano/CPU per slot, difficoltà) → INTRO PARTITA
-   → ROUND 1..5 → CLASSIFICA FINALE → (Rivincita | Menu)
+TITOLO (demo tra CPU sullo sfondo) → NUOVA PARTITA (umano/CPU per gatto, difficoltà, round)
+   → ROUND 1..N → CLASSIFICA FINALE → (INVIO rivincita | ESC menu)
+                 ↕ ESC: PAUSA (riprendi / ricomincia / menu)
 ```
+
+Dal titolo: **Gioca**, **Regole**, **Comandi** (rimappatura e prova tasti), **Opzioni** (volumi, audio, arbitro). Le scelte restano salvate nel browser.
 
 ### 5.1 Fasi di un round (state machine)
 
@@ -129,9 +132,9 @@ Proposta iniziale, rimappabile da menu:
 | P3        | `O`    | `L`   |
 | P4        | `↑`    | `↓`   |
 
-Menu: `Enter` conferma, `Esc` pausa.
+Menu: frecce per muoversi e cambiare valore, `INVIO` conferma, `ESC` indietro / pausa, `M` audio sì/no. I tasti dei gatti si cambiano in **Comandi** (un tasto già usato viene scambiato; `INVIO`, `ESC`, `M`, `F3`, `TAB` sono riservati).
 
-Nota tecnica: molte tastiere hanno **ghosting** (alcune combinazioni di tasti premuti insieme non vengono rilevate). Nel menu ci sarà un "test tasti" per verificare che la propria tastiera regga 4 giocatori; i tasti proposti sono distanti tra loro apposta.
+Nota tecnica: molte tastiere hanno **ghosting** (alcune combinazioni di tasti premuti insieme non vengono rilevate). In **Comandi → Prova i tasti** i tasti premuti si illuminano: se uno non si accende premendolo insieme agli altri, la tastiera non regge quella combinazione. I tasti predefiniti sono distanti tra loro apposta.
 
 ## 8. CPU
 

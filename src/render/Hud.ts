@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import type { PlayerSlot } from '../config/controls';
+import { keyLabel } from '../config/keyLabel';
+import type { KeyPair } from '../config/settings';
 import type { MatchMachine, RoundEvent, RoundResult } from '../core/MatchMachine';
 import type { MatchScene } from '../scenes/MatchScene';
 import type { PixelLayout } from './pixelLayout';
@@ -10,9 +12,6 @@ const CONTENT_NAMES: Record<string, string> = {
   salmone: 'il SALMONE',
   gamberetto: 'il GAMBERETTO D’ORO',
 };
-
-const KEY_LABELS: Record<string, string> = { ArrowUp: '↑', ArrowDown: '↓' };
-const keyLabel = (code: string) => KEY_LABELS[code] ?? code.replace(/^Key/, '');
 
 export const formatPoints = (n: number) =>
   Number.isInteger(n) ? String(n) : n.toFixed(2).replace(/0+$/, '');
@@ -39,6 +38,7 @@ export class Hud {
     private readonly slots: readonly PlayerSlot[],
     /** Per ogni slot: etichetta CPU (es. "CPU normale") oppure null se umano. */
     cpuLabels: readonly (string | null)[] = [],
+    keys: readonly KeyPair[] = slots.map((s) => s.keys),
   ) {
     this.root = document.createElement('div');
     this.root.className = 'hud';
@@ -56,8 +56,8 @@ export class Hud {
         <span class="hud-key">${
           cpuLabels[i]
             ? `<span class="hud-cpu">${cpuLabels[i]}</span>`
-            : `scatto <kbd>${keyLabel(slot.keys.dash)}</kbd>
-               finta <kbd>${keyLabel(slot.keys.fake)}</kbd>`
+            : `scatto <kbd>${keyLabel(keys[i].dash)}</kbd>
+               finta <kbd>${keyLabel(keys[i].fake)}</kbd>`
         }</span>`;
       this.root.appendChild(panel);
       this.scores.push(panel.querySelector('.hud-score')!);
@@ -84,6 +84,11 @@ export class Hud {
       status === 'locked'
         ? 'premi un tasto per l’audio'
         : `<kbd>M</kbd> audio ${status === 'on' ? 'sì' : 'no'}`;
+  }
+
+  /** Rimuove l'HUD dalla pagina (fine sessione). */
+  dispose(): void {
+    this.root.remove();
   }
 
   /** Nuova partita. */
@@ -174,7 +179,7 @@ export class Hud {
     this.finalPanel.innerHTML = `
       <h2>${this.slots[standings[0]].name} vince la pappa!</h2>
       <ol>${rows}</ol>
-      <p>Premi <kbd>INVIO</kbd> per la rivincita</p>`;
+      <p><kbd>INVIO</kbd> rivincita · <kbd>ESC</kbd> menu</p>`;
     this.finalPanel.hidden = false;
   }
 

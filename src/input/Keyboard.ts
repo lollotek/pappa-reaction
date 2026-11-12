@@ -1,4 +1,4 @@
-import type { PlayerSlot } from '../config/controls';
+import type { KeyPair } from '../config/settings';
 import type { PlayerAction, TimedInput } from '../core/MatchMachine';
 
 export type { TimedInput } from '../core/MatchMachine';
@@ -11,12 +11,23 @@ export class Keyboard {
   private queue: TimedInput[] = [];
   private readonly bindings = new Map<string, { player: number; action: PlayerAction }>();
 
-  constructor(slots: readonly PlayerSlot[], target: Window = window) {
-    slots.forEach((slot, player) => {
-      this.bindings.set(slot.keys.dash, { player, action: 'dash' });
-      this.bindings.set(slot.keys.fake, { player, action: 'fake' });
-    });
+  constructor(keys: readonly KeyPair[], target: Window = window) {
+    this.setBindings(keys);
     target.addEventListener('keydown', (e) => this.onKeyDown(e));
+  }
+
+  /** Assegna (o riassegna dal menu Comandi) i tasti di ogni giocatore. */
+  setBindings(keys: readonly KeyPair[]): void {
+    this.bindings.clear();
+    keys.forEach((k, player) => {
+      this.bindings.set(k.dash, { player, action: 'dash' });
+      this.bindings.set(k.fake, { player, action: 'fake' });
+    });
+  }
+
+  /** Scarta le pressioni accumulate (es. mentre si è nei menu). */
+  clear(): void {
+    this.queue = [];
   }
 
   /** Restituisce le pressioni accumulate, ordinate per tempo, e svuota la coda. */

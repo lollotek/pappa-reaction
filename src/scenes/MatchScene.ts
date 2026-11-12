@@ -137,7 +137,7 @@ export class MatchScene {
   }
 
   update(now: number, m: MatchMachine): void {
-    const dt = this.lastNow === null ? 0 : Math.min(now - this.lastNow, 100);
+    const dt = this.lastNow === null ? 0 : Math.min(Math.max(now - this.lastNow, 0), 100);
     this.lastNow = now;
     if (this.camera.aspect !== this.fittedAspect) this.fitCamera();
 
