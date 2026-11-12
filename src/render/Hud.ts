@@ -31,6 +31,7 @@ export class Hud {
   private readonly banner: HTMLElement;
   private readonly roundLabel: HTMLElement;
   private readonly finalPanel: HTMLElement;
+  private readonly audioLabel: HTMLElement;
   private readonly tmp = new THREE.Vector3();
 
   constructor(
@@ -72,7 +73,17 @@ export class Hud {
     this.banner = this.el('hud-banner');
     this.roundLabel = this.el('hud-round');
     this.finalPanel = this.el('hud-final');
+    this.audioLabel = this.el('hud-audio');
     this.finalPanel.hidden = true;
+  }
+
+  /** Stato dell'audio: bloccato dal browser finché non si preme un tasto. */
+  setAudioStatus(status: 'locked' | 'on' | 'off'): void {
+    this.audioLabel.dataset.status = status;
+    this.audioLabel.innerHTML =
+      status === 'locked'
+        ? 'premi un tasto per l’audio'
+        : `<kbd>M</kbd> audio ${status === 'on' ? 'sì' : 'no'}`;
   }
 
   /** Nuova partita. */

@@ -259,3 +259,23 @@ body {
   border-radius: 8px;
   background: var(--badge);
 }
+
+.hud-audio {
+  position: absolute;
+  top: 34px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 13px;
+  opacity: 0.85;
+}
+.hud-audio[data-status='locked'] {
+  color: #ffe066;
+}
+.hud-audio kbd {
+  padding: 0 5px;
+  border: 2px solid #fff;
+  border-radius: 4px;
+  font-family: inherit;
+  text-shadow: none;
+  background: rgb(0 0 0 / 0.4);
+}

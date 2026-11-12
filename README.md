@@ -11,7 +11,7 @@ Minigioco di riflessi per 1–4 giocatori su tastiera, in Three.js: quattro gatt
 
 ## Stato
 
-M4 completata: grafica generativa (salotto, gatti low poly, effetti). Prossimo passo: **M5 — Audio**.
+M5 completata: musica ed effetti sintetizzati. Prossimo passo: **M6 — Menu e flusso**.
 
 | Gatto    | Scatto | Finta |
 | -------- | ------ | ----- |
@@ -20,7 +20,7 @@ M4 completata: grafica generativa (salotto, gatti low poly, effetti). Prossimo p
 | Poh      | `O`    | `L`   |
 | Margot   | `↑`    | `↓`   |
 
-`INVIO` a fine partita per la rivincita.
+`INVIO` a fine partita per la rivincita. `M` attiva/disattiva l'audio (il browser lo sblocca alla prima pressione di un tasto).
 
 Parametri URL (provvisori, finché non c'è il menu):
 

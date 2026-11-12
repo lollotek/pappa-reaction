@@ -2,6 +2,9 @@ import '@fontsource/pixelify-sans/400.css';
 import '@fontsource/pixelify-sans/700.css';
 import './style.css';
 import { CpuPlayer } from './ai/CpuPlayer';
+import { AudioEngine } from './audio/AudioEngine';
+import { GameAudio } from './audio/GameAudio';
+import { musicTempo } from './audio/notes';
 import { playerSlots } from './config/controls';
 import { parseMatchSetup } from './config/matchSetup';
 import { tuning } from './config/tuning';
@@ -59,6 +62,10 @@ function startMatch(container: HTMLElement): void {
   );
   const keyboard = new Keyboard(playerSlots);
 
+  // Audio sintetizzato; la musica si ferma al reveal (l'indizio contro le finte del coperchio).
+  const audio = new AudioEngine();
+  const gameAudio = new GameAudio(audio, { hiccupOnFakeLid: setup.difficulty === 'difficile' });
+
   let seed = 0;
   let machine!: MatchMachine;
   let driver!: MatchDriver;
@@ -80,6 +87,30 @@ function startMatch(container: HTMLElement): void {
     if (e.code === 'Enter' && machine.phase === 'final') newMatch(e.timeStamp);
   });
 
+  const refreshAudio = () => {
+    hud.setAudioStatus(!audio.ready ? 'locked' : audio.muted ? 'off' : 'on');
+    // Audio sbloccato a giro già iniziato: la musica parte subito.
+    if (audio.ready && machine.phase === 'circling' && !audio.musicPlaying) {
+      audio.startMusic(musicTempo(machine.round, machine.suddenDeath));
+    }
+  };
+  // Solo in sviluppo: accesso da console per test e debug.
+  if (import.meta.env.DEV) {
+    Object.assign(window, {
+      __pappa: {
+        audio,
+        get machine() {
+          return machine;
+        },
+      },
+    });
+  }
+  audio.onChange(refreshAudio);
+  refreshAudio();
+  window.addEventListener('keydown', (e) => {
+    if (e.code === 'KeyM' && !e.repeat) audio.toggleMute();
+  });
+
   let fpsFrames = 0;
   let fpsSince = performance.now();
   let fps = 0;
@@ -92,6 +123,7 @@ function startMatch(container: HTMLElement): void {
     for (const e of events) {
       scene.onEvent(e);
       hud.onEvent(e, machine);
+      gameAudio.onEvent(e, machine);
     }
 
     // 3. Rendering.

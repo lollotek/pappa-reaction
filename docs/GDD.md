@@ -160,8 +160,11 @@ Ogni slot non occupato da un umano è una CPU. La CPU usa le stesse regole e lo 
 
 ## 10. Audio
 
-- Musichetta allegra in loop durante `CIRCLING`; si interrompe **istantaneamente** al reveal (Web Audio, nessun fade).
-- SFX: passi, scatto, finta (piccolo "whoosh"), bonk sul coperchio, coperchio che si alza, "gnam", cacchetta ("blegh" + mosca), miagolii di vittoria/sconfitta, fanfara finale.
+- Tutto **sintetizzato** con Web Audio (nessun file audio), in stile chiptune.
+- Musichetta allegra in loop durante `CIRCLING`, più veloce a ogni round e nello spareggio; si interrompe **istantaneamente** al reveal vero. Durante le finte del coperchio **continua**: è l'indizio per i giocatori attenti (in "difficile" fa un piccolo singhiozzo, per confondere).
+- SFX: jingle di inizio round (speciale per l'ultimo e lo spareggio), coperchio che si alza / si richiude / "bussa" nella finta, scatto (lo stesso suono per scatto vero e finto, per non tradire la finta), bonk, "gnam", cacchetta ("blegh" + mosca), sospiro di sollievo se nessuno ci casca, fanfara finale.
+- Miagolii: ogni gatto ha la sua altezza; contento (vince la pappa), seccato (bonk), triste (cacchetta).
+- I browser attivano l'audio solo dopo un'interazione: finché non si preme un tasto l'HUD lo segnala. `M` attiva/disattiva l'audio.
 
 ## 11. Parametri di bilanciamento
 

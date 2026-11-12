@@ -44,7 +44,11 @@ src/
     Hud.ts                punteggi, round, tempi di reazione
     Fx.ts                 stelline bonk, polvere, nuvoletta puzza
   audio/
-    AudioManager.ts       musica loop, stop istantaneo, sfx
+    AudioEngine.ts        contesto Web Audio, sblocco al primo tasto, muto (M), effetti e miagolii
+    Music.ts              musichetta chiptune in loop, stop istantaneo, "singhiozzo"
+    Synth.ts              toni e rumore filtrato (tutto sintetizzato, nessun file)
+    notes.ts              spartito e tempo per round (logica pura)
+    GameAudio.ts          eventi della partita → suoni
   scenes/
     TitleScene.ts, SetupScene.ts, MatchScene.ts, ResultsScene.ts
 assets/
@@ -123,9 +127,13 @@ tests/
 
 ### M5 — Audio
 
-- [ ] Musichetta loop + stop istantaneo al reveal
-- [ ] Set SFX completo, miagolii per gatto
-- [ ] Volume musica/effetti nelle opzioni
+- [x] Musichetta chiptune originale in loop (8 battute, quadra + triangolo + charleston), accelera a ogni round e nello spareggio
+- [x] Stop istantaneo al reveal vero, mai durante le finte del coperchio (in difficoltà "difficile" la musica fa un singhiozzo alla finta) — misurato nel browser: segnale della musica a zero 25 ms dopo il reveal
+- [x] Effetti sintetizzati: jingle di round, coperchio (apertura, chiusura, finta che "bussa"), scatto (uguale per scatto vero e finto), bonk, "gnam", "blegh" con mosca, sospiro di sollievo, fanfara
+- [x] Miagolio sintetico per gatto (altezza diversa) in tre umori: contento, seccato, triste
+- [x] Sblocco audio al primo tasto (regola dei browser), `M` attiva/disattiva, scelta salvata nel browser; indicatore nell'HUD
+- [x] Test: spartito, tempi, mappatura eventi → suoni (56 test in totale)
+- [ ] Volume separato musica/effetti → spostato nel menu opzioni di M6
 
 ### M6 — Menu e flusso
 
