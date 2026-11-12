@@ -4,7 +4,7 @@ body {
   height: 100%;
   overflow: hidden;
   background: #1a1522;
-  font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
+  font-family: 'Pixelify Sans', 'Trebuchet MS', sans-serif;
   user-select: none;
 }
 
@@ -45,7 +45,11 @@ body {
   grid-template-columns: auto auto;
   align-items: center;
   gap: 2px 10px;
-  padding: 10px 14px;
+  margin: 8px;
+  padding: 10px 14px 8px;
+  border: 3px solid #000;
+  border-radius: 14px;
+  background: rgb(43 34 54 / 0.72);
 }
 .hud-panel.tl {
   top: 0;
@@ -65,13 +69,30 @@ body {
 }
 
 .hud-badge {
+  position: relative;
   grid-row: span 2;
   padding: 6px 10px;
   border: 3px solid #000;
-  border-radius: 12px;
+  border-radius: 14px 14px 16px 16px;
   background: var(--badge);
   font-size: 22px;
-  font-weight: 900;
+  font-weight: 700;
+}
+/* Orecchie da gatto sul badge. */
+.hud-badge::before,
+.hud-badge::after {
+  content: '';
+  position: absolute;
+  top: -13px;
+  border-left: 9px solid transparent;
+  border-right: 9px solid transparent;
+  border-bottom: 13px solid #000;
+}
+.hud-badge::before {
+  left: 0;
+}
+.hud-badge::after {
+  right: 0;
 }
 .hud-name {
   font-size: 16px;
@@ -79,7 +100,7 @@ body {
 }
 .hud-score {
   font-size: 28px;
-  font-weight: 900;
+  font-weight: 700;
   color: #ffe066;
 }
 .hud-key {
@@ -91,7 +112,7 @@ body {
   padding: 0 5px;
   border: 2px solid #fff;
   border-radius: 4px;
-  font-family: monospace;
+  font-family: inherit;
   font-size: 13px;
   text-shadow: none;
   background: rgb(0 0 0 / 0.4);
@@ -103,7 +124,7 @@ body {
   left: 50%;
   transform: translateX(-50%);
   font-size: clamp(22px, 4vw, 52px);
-  font-weight: 900;
+  font-weight: 700;
   color: #ffb347;
   white-space: nowrap;
 }
@@ -118,7 +139,7 @@ body {
   background: #fff;
   color: var(--badge);
   font-size: 20px;
-  font-weight: 900;
+  font-weight: 700;
   text-shadow: none;
   white-space: nowrap;
 }
@@ -154,7 +175,7 @@ body {
 
 .hud-final {
   position: absolute;
-  top: 50%;
+  top: 33%;
   left: 50%;
   transform: translate(-50%, -50%);
   min-width: 300px;
@@ -191,7 +212,7 @@ body {
   color: #ffe066;
 }
 .hud-final .pts {
-  font-weight: 900;
+  font-weight: 700;
 }
 .hud-final p {
   margin: 14px 0 0;
@@ -200,7 +221,7 @@ body {
   padding: 0 6px;
   border: 2px solid #fff;
   border-radius: 4px;
-  font-family: monospace;
+  font-family: inherit;
   text-shadow: none;
 }
 
@@ -211,4 +232,30 @@ body {
   font-weight: 700;
   letter-spacing: 0.05em;
   text-shadow: none;
+}
+
+.showroom-label,
+.showroom-names {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #fff;
+  font-weight: 700;
+  text-shadow: 0 2px #000;
+  pointer-events: none;
+}
+.showroom-label {
+  top: 12px;
+  font-size: 16px;
+}
+.showroom-names {
+  bottom: 18%;
+  display: flex;
+  gap: 9vw;
+  font-size: 20px;
+}
+.showroom-names span {
+  padding: 2px 10px;
+  border-radius: 8px;
+  background: var(--badge);
 }

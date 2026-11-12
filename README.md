@@ -11,7 +11,7 @@ Minigioco di riflessi per 1–4 giocatori su tastiera, in Three.js: quattro gatt
 
 ## Stato
 
-M3 completata: CPU con 3 difficoltà. Prossimo passo: **M4 — Grafica**.
+M4 completata: grafica generativa (salotto, gatti low poly, effetti). Prossimo passo: **M5 — Audio**.
 
 | Gatto    | Scatto | Finta |
 | -------- | ------ | ----- |
@@ -27,6 +27,7 @@ Parametri URL (provvisori, finché non c'è il menu):
 - `?cpu=2,3,4` quali gatti sono CPU (default `2,3,4`: tu sei Priamo); `?cpu=none` tutti umani
 - `?diff=facile|normale|difficile` difficoltà CPU (default `normale`)
 - `?seed=123` rigioca una partita identica (CPU comprese)
+- `?vetrina` mostra i 4 gatti da vicino per rivedere modelli e pose (←/→ posa, SPAZIO rotazione, A automatico)
 
 Esempio: `http://localhost:5173/?cpu=3,4&diff=difficile` → Priamo e Tempesta umani contro 2 CPU difficili.
 

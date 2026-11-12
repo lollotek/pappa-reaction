@@ -37,8 +37,8 @@ Le statistiche dei gatti sono **identiche** (solo estetica), per mantenere il gi
 
 - **Pista circolare** su cui i 4 gatti trottano in senso antiorario, equidistanti (90° l'uno dall'altro).
 - **Struttura centrale**: una ciotola/piatto grande coperto da un **coperchio di legno** (a cupola).
-- **La mano arbitro**: scende dall'alto, afferra il pomello del coperchio e lo solleva. È il "telegrafo" di tutte le azioni del round (finte comprese).
-- Ambientazione proposta (originale, non ripresa dagli screenshot di riferimento): pavimento di una cucina/salotto con tappeto rotondo come pista, oppure giardino di casa. → _domanda aperta_.
+- **La mano arbitro**: scende dall'alto, afferra il pomello del coperchio e lo solleva. È il "telegrafo" di tutte le azioni del round (finte comprese). Al reveal la mano strappa il coperchio verso l'alto, fuori dall'inquadratura, così nessun gatto resta nascosto; a fine round lo riabbassa.
+- **Ambientazione**: salotto di casa — parquet, parete con finestra e quadretti, libreria, tiragraffi, piante; la pista è un tappeto rotondo intrecciato (fascia chiara).
 
 ## 5. Flusso di una partita
 
@@ -154,7 +154,8 @@ Ogni slot non occupato da un umano è una CPU. La CPU usa le stesse regole e lo 
 - **Resa pixel**: la scena viene renderizzata a bassa risoluzione (es. 480×270) e poi ingrandita a schermo intero senza sfocatura → effetto pixel uniforme anche sugli oggetti 3D.
 - **Palette**: limitata (32–48 colori), toni caldi e morbidi.
 - **Animazioni dei gatti** (low poly, animazione procedurale per parti — corpo, testa, zampe, coda): camminata, scatto, finta, presa della pappa, bonk/stordito, schifato (cacchetta), festa, triste.
-- **HUD**: punteggi ai 4 angoli con badge giocatore colorato e icona pesce + numero; tempo di reazione in una nuvoletta sopra il gatto; scritta "ROUND N" centrale.
+- **HUD**: font pixel (Pixelify Sans); punteggi ai 4 angoli in pannelli con badge a testa di gatto nel colore del giocatore; tempo di reazione in una nuvoletta sopra il gatto; banner centrale ("ROUND N", esito del round); classifica finale con coriandoli.
+- **Distinguere i gatti**: collare nel colore del giocatore; Priamo più nero, Tempesta con riflessi bruni; Poh con macchia bianca sulla spalla, Margot sul posteriore e lista bianca sulla fronte.
 - **Riferimenti**: gli screenshot allegati sono solo riferimento di _ritmo e inquadratura_; grafica, ambientazione e personaggi sono originali.
 
 ## 10. Audio

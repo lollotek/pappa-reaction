@@ -109,14 +109,17 @@ tests/
 
 ### M4 — Grafica
 
-- [ ] Palette; ambientazione salotto con tappeto rotondo
-- [ ] Gatti low poly generativi (2 neri pelo lungo, 2 tuxedo) con animazioni procedurali (camminata, scatto, finta, presa, bonk, schifato, festa, triste)
-- [ ] Arena low poly generativa + decori sprite 2D
+- [x] Salotto generativo: parquet, parete con finestra/tende/quadretti, tappeto rotondo intrecciato (la pista è la fascia chiara) — `render/generative/canvasTexture.ts`
+- [x] Gatti low poly generativi (`render/CatModel.ts`): 2 neri a pelo lungo (ciuffi, coda a piumino, occhi ambra), 2 tuxedo (faccia bianca con calotta nera, macchia bianca diversa per Poh/Margot), collare col colore del giocatore, ombra a disco
+- [x] 10 pose procedurali: idle (respiro, battito ciglia), run, dash, eat, bonk, stunned, yuck, celebrate, sad, sit
+- [x] Ciotola in ceramica, cloche di legno a doghe, mano con dita che stringono il pomello; aperto, il coperchio esce dall'inquadratura (altrimenti copre il gatto dietro la ciotola)
+- [x] Contenuti low poly: crocchette, tonno, salmone, gamberetto d'oro (ruota), cacchetta con mosche
+- [x] Decori sprite 2D (`render/generative/sprites.ts`): libreria, lampada, pianta grande, tiragraffi, vasi di fiori, cuscini, gomitoli
+- [x] Effetti (`render/Fx.ts`): polvere su scatti/finte/false partenze, coriandoli finali; stelline e nuvoletta puzzolente
+- [x] HUD: font pixel (Pixelify Sans, incluso nel bundle), pannelli con badge a testa di gatto
+- [x] Vetrina `?vetrina`: i 4 gatti da vicino, ←/→ cambia posa, SPAZIO rotazione, A ciclo automatico
 - [ ] Revisione manuale: correzione proporzioni/colori ed eventuale sostituzione con asset fatti a mano
-- [ ] Mano arbitro + coperchio animati (apertura, finte)
-- [ ] Icone cibo e cacchetta, HUD definitivo (badge, punteggi, nuvolette tempo)
-- [ ] Effetti: stelline, polvere, mosche, coriandoli
-- **Fatto quando**: il greybox è interamente sostituito dagli asset finali.
+- **Fatto quando**: il greybox è interamente sostituito dagli asset finali. ✅ generativo (2026-11-11) — resta la revisione manuale
 
 ### M5 — Audio
 
