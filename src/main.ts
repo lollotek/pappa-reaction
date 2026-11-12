@@ -81,6 +81,7 @@ function startGame(root: HTMLElement): void {
       __pappa: {
         app,
         audio,
+        renderer: pixel.renderer,
         get machine() {
           return app.currentSession?.machine;
         },

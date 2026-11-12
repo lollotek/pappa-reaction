@@ -60,6 +60,13 @@ export class MatchScene {
   private angle = 0;
   private lastNow: number | null = null;
   private fittedAspect = 0;
+  /** Posizione e punto di mira "a riposo" della camera (senza scosse né zoom). */
+  private readonly camBase = new THREE.Vector3();
+  private readonly camTarget = new THREE.Vector3(0, 0, -0.4);
+  /** Scosse programmate: istante, intensità, durata (ms). */
+  private shakes: { at: number; power: number; ms: number }[] = [];
+  /** Lampi e scosse attivi (si possono spegnere dalle Opzioni). */
+  effects = true;
   private lidOpenedAt: number | null = null;
   private lidClosingAt: number | null = null;
   private fakeLid: { at: number; durationMs: number } | null = null;
@@ -94,11 +101,13 @@ export class MatchScene {
           this.fakeLid = null;
         } else if (e.phase === 'end') {
           this.lidClosingAt = e.t;
+          this.shake(e.t + 330, 0.06, 160); // il coperchio ricade sulla ciotola
         } else if (e.phase === 'final') {
           this.fx.confetti();
         }
         break;
       case 'falseStart':
+        this.shake(e.t + 180, 0.14, 260); // bonk contro il coperchio
         this.runners[e.player].falseStartAt = e.t;
         this.runners[e.player].stunnedUntil = e.stunnedUntil;
         this.fx.dust(this.runners[e.player].cat.root.position, 4);
@@ -134,6 +143,7 @@ export class MatchScene {
   reset(): void {
     for (const r of this.runners) r.stinky = false;
     this.fx.clear();
+    this.shakes = [];
   }
 
   update(now: number, m: MatchMachine): void {
@@ -163,6 +173,46 @@ export class MatchScene {
     this.updateLidAndContent(now, m);
     this.arena.faceCamera(this.camera);
     this.fx.update(dt, this.camera);
+    this.updateCamera(now, m);
+  }
+
+  private shake(at: number, power: number, ms: number): void {
+    if (this.effects) this.shakes.push({ at, power, ms });
+  }
+
+  /**
+   * Camera: posizione base + piccolo zoom sul vincitore del round + scosse.
+   * Solo estetica: la logica e il cronometro non ne dipendono.
+   */
+  private updateCamera(now: number, m: MatchMachine): void {
+    const cam = this.camera;
+    const look = this.camTarget.clone();
+    cam.position.copy(this.camBase);
+
+    // Zoom sul vincitore (o sui vincitori) durante l'esito del round.
+    const winners = m.lastResult?.winners ?? [];
+    let zoom = 0;
+    if (this.effects && winners.length > 0) {
+      if (m.phase === 'resolve') zoom = easeOut(clamp01((now - m.phaseStart) / 350));
+      else if (m.phase === 'end') zoom = 1 - easeOut(clamp01((now - m.phaseStart) / 400));
+    }
+    if (zoom > 0) {
+      const focus = new THREE.Vector3();
+      for (const w of winners) focus.add(this.runners[w].cat.root.position);
+      focus.divideScalar(winners.length).setY(0.6);
+      cam.position.lerp(focus.clone().add(new THREE.Vector3(0, 6, 6)), zoom * 0.35);
+      look.lerp(focus, zoom * 0.5);
+    }
+
+    // Scosse: rumore che si smorza nel tempo.
+    this.shakes = this.shakes.filter((sh) => now < sh.at + sh.ms);
+    for (const sh of this.shakes) {
+      if (now < sh.at) continue;
+      const k = 1 - (now - sh.at) / sh.ms;
+      cam.position.x += (Math.random() - 0.5) * 2 * sh.power * k;
+      cam.position.y += (Math.random() - 0.5) * 2 * sh.power * k;
+    }
+    cam.lookAt(look);
   }
 
   /** Posizione mondo sopra la testa del gatto `i` (per le nuvolette HUD). */
@@ -362,9 +412,10 @@ export class MatchScene {
   private fitCamera(): void {
     const tilt = THREE.MathUtils.degToRad(55);
     const dist = 16 * Math.max(1, 16 / 9 / this.camera.aspect);
-    this.camera.position.set(0, Math.sin(tilt) * dist, Math.cos(tilt) * dist);
+    this.camBase.set(0, Math.sin(tilt) * dist, Math.cos(tilt) * dist);
+    this.camera.position.copy(this.camBase);
     // Puntata un po' indietro per includere la parete del salotto.
-    this.camera.lookAt(0, 0, -0.4);
+    this.camera.lookAt(this.camTarget);
     this.fittedAspect = this.camera.aspect;
   }
 }

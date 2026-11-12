@@ -11,7 +11,7 @@ Minigioco di riflessi per 1–4 giocatori su tastiera, in Three.js: quattro gatt
 
 ## Stato
 
-M6 completata: menu, pausa, impostazioni salvate. Prossimo passo: **M7 — Rifinitura e rilascio**.
+**Versione 1.0.0** — tutte le milestone completate (M0–M7). Restano: playtest con persone vere, prove su Firefox/Edge/Safari, revisione manuale della grafica generativa.
 
 ## Come si gioca
 
@@ -41,6 +41,17 @@ npm test         # test della logica (Vitest)
 npm run build    # typecheck + build statica in dist/
 npm run lint     # ESLint
 npm run format   # Prettier
+npm run balance  # simulazione di bilanciamento CPU (percentuali di vittoria)
+npm run package  # build + release/pappa-reaction-<versione>.zip
 ```
+
+## Pubblicazione
+
+`npm run package` crea uno zip con il gioco già compilato (pagina, codice, font, icona; tutti i percorsi sono relativi).
+
+- **itch.io**: nuovo progetto → _Kind of project_: HTML → carica lo zip e spunta _This file will be played in the browser_. Dimensione consigliata della finestra: 1280×720, con il pulsante schermo intero attivo.
+- **Hosting statico** (GitHub Pages, Netlify, un qualsiasi server web): estrai lo zip e pubblica i file così come sono.
+
+Il gioco va servito via `http(s)`: aprendo `index.html` direttamente dal disco il browser blocca i moduli JavaScript. Per provare la build in locale: `npm run build` e poi `npx vite preview`.
 
 In gioco: `F3` mostra/nasconde l'overlay di debug.

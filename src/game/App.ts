@@ -76,6 +76,16 @@ export class App {
     deps.keyboard.setBindings(this.settings.keys);
     deps.audio.onChange(() => this.refreshAudio());
     window.addEventListener('keydown', (e) => this.onKey(e));
+
+    // Pausa automatica: con la finestra in secondo piano il browser smette di
+    // disegnare ma il tempo reale scorre, e al ritorno i round sarebbero passati.
+    const autoPause = () => {
+      if (this.mode === 'match' && this.session && !this.session.finished) this.pause();
+    };
+    window.addEventListener('blur', autoPause);
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) autoPause();
+    });
   }
 
   /** Partita attiva (o demo), per il debug. */
@@ -167,6 +177,7 @@ export class App {
         roundCount: s.roundCount,
         keys: s.keys,
         trickyReferee: s.trickyReferee,
+        screenEffects: s.screenEffects,
         showHud: true,
         ...overrides,
       },
@@ -229,6 +240,7 @@ export class App {
         roundCount: 5,
         keys: this.settings.keys,
         trickyReferee: false,
+        screenEffects: false,
         showHud: false,
       },
       realNow,
@@ -368,6 +380,13 @@ export class App {
         options: ['normale', 'furbo'],
         get: () => (this.settings.trickyReferee ? 1 : 0),
         set: (v) => this.update({ trickyReferee: v === 1 }),
+      },
+      {
+        kind: 'choice',
+        label: 'Lampi e scosse',
+        options: ['sì', 'no'],
+        get: () => (this.settings.screenEffects ? 0 : 1),
+        set: (v) => this.update({ screenEffects: v === 0 }),
       },
       {
         kind: 'info',

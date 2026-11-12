@@ -9,4 +9,5 @@ export default tseslint.config(
   ...tseslint.configs.recommended,
   prettier,
   { languageOptions: { globals: { ...globals.browser } } },
+  { files: ['scripts/**'], languageOptions: { globals: { ...globals.node } } },
 );

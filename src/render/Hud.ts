@@ -20,6 +20,13 @@ const formatSeconds = (ms: number) => `${(ms / 1000).toFixed(2)} sec.`;
 const joinNames = (names: string[]) =>
   names.length <= 1 ? (names[0] ?? '') : `${names.slice(0, -1).join(', ')} e ${names.at(-1)}`;
 
+/** Fa ripartire un'animazione CSS legata a una classe. */
+function restartAnimation(el: HTMLElement, cls: string): void {
+  el.classList.remove(cls);
+  void el.offsetWidth; // forza il reflow
+  el.classList.add(cls);
+}
+
 type BubbleKind = 'time' | 'stun' | 'poop' | 'bench';
 
 /** HUD in DOM sopra il canvas: punteggi, banner, nuvolette sopra i gatti, classifica. */
@@ -31,6 +38,9 @@ export class Hud {
   private readonly roundLabel: HTMLElement;
   private readonly finalPanel: HTMLElement;
   private readonly audioLabel: HTMLElement;
+  private readonly flash: HTMLElement;
+  /** Lampo al reveal (si può spegnere dalle Opzioni). */
+  effects = true;
   private readonly tmp = new THREE.Vector3();
 
   constructor(
@@ -74,6 +84,7 @@ export class Hud {
     this.roundLabel = this.el('hud-round');
     this.finalPanel = this.el('hud-final');
     this.audioLabel = this.el('hud-audio');
+    this.flash = this.el('hud-flash');
     this.finalPanel.hidden = true;
   }
 
@@ -111,6 +122,9 @@ export class Hud {
           });
         } else if (e.phase === 'circling') {
           this.showBanner('');
+        } else if (e.phase === 'dash' && this.effects) {
+          // Lampo nello stesso frame in cui si apre il coperchio: aiuta anche senza audio.
+          restartAnimation(this.flash, 'on');
         } else if (e.phase === 'final') {
           this.showFinal(m);
         }
@@ -130,7 +144,11 @@ export class Hud {
       case 'resolved':
         e.result.winners.forEach((w) => this.bubbles[w].classList.add('win'));
         this.showBanner(this.resultText(e.result));
-        m.scores.forEach((s, i) => (this.scores[i].textContent = formatPoints(s)));
+        m.scores.forEach((s, i) => {
+          const text = formatPoints(s);
+          if (this.scores[i].textContent !== text) restartAnimation(this.scores[i], 'pop');
+          this.scores[i].textContent = text;
+        });
         break;
     }
   }
@@ -196,6 +214,7 @@ export class Hud {
     b.dataset.kind = kind;
     b.classList.remove('win');
     b.hidden = false;
+    restartAnimation(b, 'pop');
   }
 
   private hideBubble(player: number): void {
@@ -208,5 +227,6 @@ export class Hud {
   private showBanner(text: string): void {
     this.banner.textContent = text;
     this.banner.hidden = text === '';
+    if (text) restartAnimation(this.banner, 'pop');
   }
 }

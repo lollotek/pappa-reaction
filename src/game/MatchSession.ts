@@ -20,6 +20,8 @@ export interface SessionOptions {
   roundCount: number;
   keys: readonly KeyPair[];
   trickyReferee: boolean;
+  /** Lampi, scosse e zoom (accessibilità: si possono spegnere). */
+  screenEffects: boolean;
   seed?: number;
   /** Demo dietro al menu: niente HUD. */
   showHud: boolean;
@@ -58,6 +60,7 @@ export class MatchSession {
           options.keys,
         )
       : null;
+    if (this.hud) this.hud.effects = options.screenEffects;
     this.gameAudio = new GameAudio(deps.audio, { hiccupOnFakeLid: options.trickyReferee });
     this.restart(realNow, options.seed);
   }
@@ -83,6 +86,7 @@ export class MatchSession {
     this.driver = new MatchDriver(this.machine, cpus);
     this.deps.audio.stopMusic();
     this.deps.scene.reset();
+    this.deps.scene.effects = this.options.screenEffects;
     this.hud?.reset();
   }
 

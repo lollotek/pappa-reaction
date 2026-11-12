@@ -117,7 +117,7 @@ tests/
 - [x] Setup provvisorio da URL in attesa del menu M6: `?cpu=2,3,4&diff=normale` (default: P1 umano contro 3 CPU normali)
 - [x] Test: comportamento CPU, distribuzione dei tempi, simulazione di partite intere a 60 Hz, difficoltà più alta vince più spesso
 - **Fatto quando**: in singolo si vince/perde in modo credibile a ogni difficoltà. ✅ logica (2026-11-11) — _da confermare con playtest umano_
-- **Dato di bilanciamento** (300 partite simulate, facile/normale/difficile/normale): la difficile vince il 96%, le normali il 4% insieme, la facile mai; false partenze per partita 1.9 / 0.9 / 0.35; spareggi nel 3% delle partite. Con le medie attuali (450/330/240 ms) vince quasi sempre la più veloce: da tarare nel playtest (es. medie più vicine o più inganni ad alta difficoltà).
+- **Dato di bilanciamento** (prima taratura): con le medie iniziali 450/330/240 ms la CPU difficile vinceva il 96% delle partite tra CPU. Ritarato in M7, vedi sotto.
 
 ### M4 — Grafica
 
@@ -160,10 +160,14 @@ tests/
 
 ### M7 — Rifinitura e rilascio
 
-- [ ] "Juice": slow-motion sul vincitore, camera shake sul bonk, freeze frame al reveal
-- [ ] Bilanciamento con playtest (tempi, probabilità, CPU)
-- [ ] Performance e compatibilità browser (Chrome, Firefox, Edge)
-- [ ] Build statica e pubblicazione (es. itch.io o hosting statico)
+- [x] Pausa automatica se la finestra perde il focus o la scheda viene nascosta (altrimenti al ritorno i round sarebbero "scappati")
+- [x] "Juice": lampo al reveal (nello stesso frame, aiuta anche senza audio), scossa della camera al bonk e quando il coperchio ricade, zoom sul vincitore durante l'esito, punteggi/banner/nuvolette che "saltano". Opzione **Lampi e scosse** per spegnerli; animazioni CSS disattivate con `prefers-reduced-motion`. Niente fermo immagine al reveal: rallenterebbe la vista proprio mentre si misura la reazione
+- [x] Bilanciamento: `npm run balance` simula partite con un "umano simulato" (290 ms) contro 3 CPU per difficoltà. Prima: umano 96% / 54% / 5% (facile/normale/difficile). Dopo la taratura: **78% / 37% / 20%**; tra CPU (facile, normale, difficile, normale) 4% / 19% / 58% / 19% invece di 1% / 4% / 93% / 3%
+- [x] Performance (Chrome 156): un frame completo logica + rendering ~0,7 ms (95° percentile 1,5 ms) su 16,7 ms disponibili; 185 draw call, ~4.000 triangoli: nessuna ottimizzazione necessaria
+- [x] Rilascio: icona (testa di gatto in pixel), meta description, `npm run package` crea `release/pappa-reaction-<versione>.zip` (≈236 kB) pronto per itch.io o hosting statico; build verificata servita da `vite preview` (nessun errore, strumenti di debug assenti)
+- [ ] Compatibilità: testato solo su Chrome; da provare Firefox, Edge, Safari
+- [ ] Playtest con persone vere per confermare la taratura delle CPU
+- [ ] Pubblicazione (da fare con il proprio account: vedi README)
 
 ## 4. Ordine consigliato e rischi
 

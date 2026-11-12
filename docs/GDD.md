@@ -142,12 +142,14 @@ Ogni slot non occupato da un umano è una CPU. La CPU usa le stesse regole e lo 
 
 | Parametro                           | Facile | Normale | Difficile |
 | ----------------------------------- | ------ | ------- | --------- |
-| Tempo di reazione medio             | 450 ms | 330 ms  | 240 ms    |
-| Variabilità (dev. std.)             | 90 ms  | 60 ms   | 40 ms     |
-| Abbocca alla finta del coperchio    | 25%    | 12%     | 5%        |
-| Abbocca alla finta di un avversario | 20%    | 10%     | 4%        |
-| Riconosce la cacchetta (non scatta) | 70%    | 85%     | 95%       |
+| Tempo di reazione medio             | 370 ms | 310 ms  | 275 ms    |
+| Variabilità (dev. std.)             | 80 ms  | 60 ms   | 45 ms     |
+| Abbocca alla finta del coperchio    | 30%    | 14%     | 7%        |
+| Abbocca alla finta di un avversario | 25%    | 12%     | 6%        |
+| Riconosce la cacchetta (non scatta) | 65%    | 85%     | 93%       |
 | Usa la finta di scatto (per round)  | 10%    | 30%     | 50%       |
+
+Valori tarati con `npm run balance` (400 partite simulate per riga) contro un "umano simulato" che reagisce in media in 290 ms (reazione + ritardo di tastiera e schermo) e ogni tanto cade nelle finte: l'umano vince il **78%** contro 3 CPU facili, il **37%** contro 3 normali, il **20%** contro 3 difficili (25% = alla pari). Da confermare con playtest veri.
 
 ## 9. Direzione artistica
 

@@ -193,8 +193,8 @@ describe('CpuPlayer', () => {
     const times = eventsOf(events, 'dash', 0).map((e) => e.reactionMs);
     expect(times.length).toBeGreaterThan(250);
     const mean = times.reduce((a, b) => a + b, 0) / times.length;
-    expect(mean).toBeGreaterThan(315);
-    expect(mean).toBeLessThan(345);
+    expect(mean).toBeGreaterThan(profile.reactionMeanMs - 15);
+    expect(mean).toBeLessThan(profile.reactionMeanMs + 15);
     expect(Math.min(...times)).toBeGreaterThanOrEqual(140);
   });
 });

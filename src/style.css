@@ -502,3 +502,60 @@ body {
   font-family: ui-monospace, Consolas, 'Courier New', monospace;
   font-weight: 700;
 }
+
+/* ------------------------------------------------------------- animazioni */
+
+.hud-flash {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+}
+.hud-flash.on {
+  animation: flash 0.16s ease-out;
+}
+@keyframes flash {
+  from {
+    opacity: 0.45;
+  }
+  to {
+    opacity: 0;
+  }
+}
+.hud-score.pop {
+  display: inline-block;
+  animation: pop 0.35s ease-out;
+}
+.hud-banner.pop {
+  animation: banner-pop 0.3s ease-out;
+}
+.hud-bubble.pop {
+  animation: bubble-pop 0.22s ease-out;
+}
+@keyframes pop {
+  40% {
+    transform: scale(1.6);
+    color: #fff;
+  }
+}
+@keyframes banner-pop {
+  from {
+    transform: translateX(-50%) scale(0.6);
+    opacity: 0;
+  }
+}
+@keyframes bubble-pop {
+  from {
+    opacity: 0;
+    scale: 0.4;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hud-flash.on,
+  .hud-score.pop,
+  .hud-banner.pop,
+  .hud-bubble.pop {
+    animation: none;
+  }
+}

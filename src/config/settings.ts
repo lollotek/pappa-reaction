@@ -20,6 +20,8 @@ export interface Settings {
   sfxVolume: number;
   /** Arbitro "furbo": alla finta del coperchio la musica fa un singhiozzo. */
   trickyReferee: boolean;
+  /** Lampo al reveal, scosse e zoom della camera. */
+  screenEffects: boolean;
 }
 
 export const ROUND_OPTIONS = [3, 5, 7] as const;
@@ -43,6 +45,7 @@ export function defaultSettings(slots: readonly PlayerSlot[]): Settings {
     musicVolume: 7,
     sfxVolume: 8,
     trickyReferee: false,
+    screenEffects: true,
   };
 }
 
@@ -85,6 +88,7 @@ export function loadSettings(store: KeyValueStore | null, slots: readonly Player
     musicVolume: volume(raw.musicVolume, def.musicVolume),
     sfxVolume: volume(raw.sfxVolume, def.sfxVolume),
     trickyReferee: typeof raw.trickyReferee === 'boolean' ? raw.trickyReferee : def.trickyReferee,
+    screenEffects: typeof raw.screenEffects === 'boolean' ? raw.screenEffects : def.screenEffects,
   };
 }
 
