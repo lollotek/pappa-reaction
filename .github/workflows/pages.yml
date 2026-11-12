@@ -27,7 +27,10 @@ jobs:
           # Stessa versione del PC di sviluppo: il package-lock è scritto da npm 11.
           node-version: 24
           cache: npm
-      - run: npm ci
+      # Non `npm ci`: il package-lock scritto su Windows non elenca alcune dipendenze
+      # opzionali di altre piattaforme (@emnapi/* di rolldown) e su Linux `npm ci` lo rifiuta.
+      # `npm install` usa le stesse versioni del lock e aggiunge solo ciò che manca.
+      - run: npm install --no-audit --no-fund
       - run: npm test
       - run: npm run build
       - uses: actions/upload-pages-artifact@v3
