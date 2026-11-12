@@ -51,7 +51,7 @@ export class Showroom {
     slots.forEach((slot, i) => {
       const cat = new CatModel({
         breed: slot.breed,
-        variant: i % 2 === 0 ? 0 : 1,
+        variant: slot.variant,
         collar: slot.badgeColor,
       });
       cat.root.position.set(-3.3 + i * 2.2, 0, 0);

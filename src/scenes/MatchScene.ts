@@ -4,6 +4,7 @@ import type { MatchMachine, RoundEvent } from '../core/MatchMachine';
 import { Arena } from '../render/Arena';
 import { CatModel, type CatPose } from '../render/CatModel';
 import { Fx } from '../render/Fx';
+import { playerArrow, SPRITE_PX_PER_UNIT } from '../render/generative/sprites';
 
 const TRACK_RADIUS = 3.4;
 /** Raggio a cui il gatto si ferma davanti alla ciotola (muso sul bordo). */
@@ -22,6 +23,10 @@ const BONK_IN_MS = 180;
 const BONK_OUT_MS = 350;
 /** Quanto mangia il vincitore prima di festeggiare. */
 const EAT_MS = 1000;
+/** Freccina sopra i gatti umani: altezza del centro, scala, oscillazione. */
+const ARROW_Y = 1.95;
+const ARROW_SCALE = 1;
+const ARROW_BOB = 0.07;
 
 const flat = (color: string) => new THREE.MeshLambertMaterial({ color, flatShading: true });
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
@@ -37,6 +42,8 @@ interface RunnerVisual {
   cat: CatModel;
   stars: THREE.Group;
   stink: THREE.Group;
+  /** Freccina che indica il gatto di un giocatore umano. */
+  arrow: THREE.Sprite;
   dashAt: number | null;
   fakeAt: number | null;
   falseStartAt: number | null;
@@ -78,7 +85,7 @@ export class MatchScene {
     sun.position.set(3, 10, 7);
     this.scene.add(sun, this.arena.group, this.fx.group);
 
-    slots.forEach((slot, i) => this.runners.push(this.createRunner(slot, i)));
+    slots.forEach((slot) => this.runners.push(this.createRunner(slot)));
     this.fitCamera();
   }
 
@@ -139,6 +146,11 @@ export class MatchScene {
     return this.lidOpenedAt !== null && this.lidClosingAt === null;
   }
 
+  /** Mostra la freccina sopra i gatti indicati (i giocatori umani). */
+  setMarkers(marked: readonly boolean[]): void {
+    this.runners.forEach((r, i) => (r.arrow.userData.marked = marked[i] ?? false));
+  }
+
   /** Nuova partita: toglie nuvolette e coriandoli rimasti. */
   reset(): void {
     for (const r of this.runners) r.stinky = false;
@@ -168,6 +180,7 @@ export class MatchScene {
       r.stars.visible = stunned;
       r.stars.rotation.y = now * 0.008;
       this.showStink(r, now);
+      this.placeArrow(r, i, now, stunned);
     });
 
     this.updateLidAndContent(now, m);
@@ -217,7 +230,7 @@ export class MatchScene {
 
   /** Posizione mondo sopra la testa del gatto `i` (per le nuvolette HUD). */
   headPosition(i: number, out = new THREE.Vector3()): THREE.Vector3 {
-    return out.copy(this.runners[i].cat.root.position).add(new THREE.Vector3(0, 1.9, 0));
+    return out.copy(this.runners[i].cat.root.position).add(new THREE.Vector3(0, 2.35, 0)); // sopra la freccina
   }
 
   private placeOnTrack(
@@ -317,6 +330,14 @@ export class MatchScene {
     r.cat.pose(rank === 1 ? 'sit' : 'sad', now);
   }
 
+  private placeArrow(r: RunnerVisual, i: number, now: number, stunned: boolean): void {
+    // Da stordito le stelline occupano lo stesso spazio: la freccina si nasconde.
+    r.arrow.visible = r.arrow.userData.marked === true && !stunned;
+    if (!r.arrow.visible) return;
+    const bob = Math.sin(now * 0.006 + i) * ARROW_BOB;
+    r.arrow.position.copy(r.cat.root.position).setY(r.cat.root.position.y + ARROW_Y + bob);
+  }
+
   private showStink(r: RunnerVisual, now: number): void {
     r.stink.visible = r.stinky;
     if (!r.stinky) return;
@@ -367,10 +388,10 @@ export class MatchScene {
     this.arena.setContent(m.content.id, scale, now);
   }
 
-  private createRunner(slot: PlayerSlot, i: number): RunnerVisual {
+  private createRunner(slot: PlayerSlot): RunnerVisual {
     const cat = new CatModel({
       breed: slot.breed,
-      variant: i % 2 === 0 ? 0 : 1,
+      variant: slot.variant,
       collar: slot.badgeColor,
     });
 
@@ -392,13 +413,28 @@ export class MatchScene {
     }
     stink.visible = false;
 
+    // Freccina pixel nel colore del giocatore; sempre davanti a tutto.
+    const sprite = playerArrow(slot.badgeColor);
+    const arrow = new THREE.Sprite(
+      new THREE.SpriteMaterial({ map: sprite.texture, alphaTest: 0.5, depthTest: false }),
+    );
+    arrow.scale.set(
+      (sprite.width / SPRITE_PX_PER_UNIT) * ARROW_SCALE,
+      (sprite.height / SPRITE_PX_PER_UNIT) * ARROW_SCALE,
+      1,
+    );
+    arrow.renderOrder = 10;
+    arrow.visible = false;
+    arrow.userData.marked = false;
+
     cat.root.scale.setScalar(CAT_SCALE);
     cat.root.add(stars, stink);
-    this.scene.add(cat.root);
+    this.scene.add(cat.root, arrow);
     return {
       cat,
       stars,
       stink,
+      arrow,
       dashAt: null,
       fakeAt: null,
       falseStartAt: null,

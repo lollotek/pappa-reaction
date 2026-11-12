@@ -122,7 +122,7 @@ tests/
 ### M4 — Grafica
 
 - [x] Salotto generativo: parquet, parete con finestra/tende/quadretti, tappeto rotondo intrecciato (la pista è la fascia chiara) — `render/generative/canvasTexture.ts`
-- [x] Gatti low poly generativi (`render/CatModel.ts`): 2 neri a pelo lungo (ciuffi, coda a piumino, occhi ambra), 2 tuxedo (faccia bianca con calotta nera, macchia bianca diversa per Poh/Margot), collare col colore del giocatore, ombra a disco
+- [x] Gatti low poly generativi (`render/CatModel.ts`): 2 neri a pelo lungo (ciuffi, coda a piumino, occhi ambra), 2 tuxedo (faccia bianca con calotta nera, macchia bianca diversa per Poh/Tempesta), collare col colore del giocatore, ombra a disco
 - [x] 10 pose procedurali: idle (respiro, battito ciglia), run, dash, eat, bonk, stunned, yuck, celebrate, sad, sit
 - [x] Ciotola in ceramica, cloche di legno a doghe, mano con dita che stringono il pomello; aperto, il coperchio esce dall'inquadratura (altrimenti copre il gatto dietro la ciotola)
 - [x] Contenuti low poly: crocchette, tonno, salmone, gamberetto d'oro (ruota), cacchetta con mosche
@@ -131,6 +131,8 @@ tests/
 - [x] HUD: font pixel (Pixelify Sans, incluso nel bundle), pannelli con badge a testa di gatto
 - [x] Vetrina `?vetrina`: i 4 gatti da vicino, ←/→ cambia posa, SPAZIO rotazione, A ciclo automatico
 - [ ] Revisione manuale: correzione proporzioni/colori ed eventuale sostituzione con asset fatti a mano
+- [x] (2026-11-12) Razze definitive: Priamo e Mariù (ex Margot) neri a pelo lungo, Tempesta e Poh tuxedo; la variante di ogni gatto è in `config/controls.ts`
+- [x] (2026-11-12) Freccina pixel nel colore del giocatore sopra i gatti umani (`playerArrow` in `sprites.ts`); le nuvolette dell'HUD salgono sopra la freccina
 - **Fatto quando**: il greybox è interamente sostituito dagli asset finali. ✅ generativo (2026-11-11) — resta la revisione manuale
 
 ### M5 — Audio
@@ -169,6 +171,72 @@ tests/
 - [ ] Playtest con persone vere per confermare la taratura delle CPU
 - [ ] Pubblicazione (da fare con il proprio account: vedi README)
 
+### Versione mobile, 1–2 giocatori (M8–M10)
+
+Design completo: [GDD §12](GDD.md#12-versione-mobile-12-giocatori). Telefono o tablet in orizzontale con pulsanti touch: in 1 giocatore il dispositivo si tiene in mano (SCATTO pollice destro, FINTA pollice sinistro); in 2 giocatori sta appoggiato o su uno stand e ognuno ha una colonna di pulsanti su un lato. La camera non cambia. La logica di gioco (`core/`, `ai/`, `game/MatchDriver.ts`) non cambia: il tocco riempie la stessa coda `TimedInput` della tastiera.
+
+Nuovi moduli previsti:
+
+```
+src/
+  input/
+    InputSource.ts        interfaccia comune drain()/clear() per tastiera e tocco
+    TouchInput.ts         pointerdown → TimedInput (e.timeStamp), una pressione per tocco
+    touchLayout.ts        logica pura: rettangoli dei pulsanti per 1 o 2 giocatori, viewport, aree sicure, classe di dispositivo; hit test
+  ui/
+    TouchButtons.ts       pulsanti nel DOM (colore e nome del gatto), stati attivo/stordito/panchina
+    ButtonTest.ts         "Prova i pulsanti" (equivalente di Prova tasti)
+  platform/
+    Device.ts             schermo intero, blocco orientamento, wake lock, tasto Indietro, audio session iOS
+    touchMode.ts          logica pura: quando attivare la modalità touch (auto / sì / no)
+public/
+  manifest.webmanifest, icone PWA (192, 512, maskable), apple-touch-icon
+```
+
+#### M8 — Input touch
+
+- [ ] `InputSource` comune; `App` legge da tastiera e tocco insieme (un tablet con tastiera usa entrambi)
+- [ ] `TouchInput`: `pointerdown` su un pulsante → `{player, action, t: e.timeStamp}`; tocco tenuto = una sola pressione
+- [ ] `touchLayout` per 1 giocatore (pollici ai due lati) e 2 giocatori (una colonna per lato), telefono e tablet (dimensioni minime in mm, distanze dal bordo, aree sicure); unit test su layout e hit test
+- [ ] `TouchButtons`: colore e nome del gatto; feedback alla pressione **identico per scatto e finta** (non deve tradire la finta); pulsante spento da stordito e in panchina
+- [ ] Pannelli dei punteggi più compatti sugli schermi piccoli, mai sotto i pulsanti
+- [ ] Blocco dei gesti del browser: `touch-action: none`, `overscroll-behavior: none`, niente menu/lente al tocco lungo (`-webkit-touch-callout`, `contextmenu`), niente evidenziazione al tocco, niente zoom
+- [ ] Modalità touch automatica al primo tocco (o con `pointer: coarse`), scelta manuale in Opzioni; in modalità touch al massimo 2 umani in Nuova partita
+- [ ] Server di sviluppo raggiungibile dal telefono in LAN con HTTPS (wake lock e service worker richiedono un contesto sicuro)
+- **Fatto quando**: su un telefono Android si gioca una partita intera in 1 e in 2 giocatori, e i tempi misurati sono coerenti con quelli da tastiera.
+
+#### M9 — Comandi e menu senza tastiera
+
+- [ ] Pausa: pulsante in alto al centro con **tocco lungo** (~0,6 s) per evitare pause accidentali
+- [ ] Fine partita: pulsanti **Rivincita** e **Menu** (al posto di INVIO/ESC)
+- [ ] Audio sì/no toccando l'indicatore dell'HUD (al posto di `M`)
+- [ ] Tasto/gesto **Indietro** di Android (`history.pushState` + `popstate`) → pausa in partita, indietro nei menu
+- [ ] In modalità touch, Comandi mostra **Prova i pulsanti** al posto della rimappatura
+- [ ] Regole: testo che parla di pulsanti invece di tasti
+- [ ] Voci di menu grandi abbastanza per il dito (min. ~44 px CSS)
+- **Fatto quando**: dal titolo alla rivincita si gioca senza mai usare la tastiera.
+
+#### M10 — Dispositivo e PWA
+
+- [ ] Schermo intero alla prima azione ("Gioca"/"Inizia!", serve un gesto dell'utente); voce in Opzioni; ripristino se il sistema lo chiude
+- [ ] Blocco orientamento sull'orizzontale **corrente** (`landscape-primary` o `-secondary`, non `landscape` generico, così il dispositivo non si capovolge inclinandolo)
+- [ ] Ripiego dove il blocco non esiste (iPhone, browser senza schermo intero): avviso "Ruota il dispositivo" in verticale e pausa automatica
+- [ ] Wake lock (`navigator.wakeLock`) mentre il gioco è visibile, richiesto di nuovo a ogni ritorno in primo piano
+- [ ] iOS: `navigator.audioSession.type = 'playback'` perché l'interruttore silenzioso non spenga il gioco (se disponibile)
+- [ ] Viewport: `viewport-fit=cover`, aree sicure `env(safe-area-inset-*)`, altezza `100dvh`
+- [ ] PWA: manifest (`display: fullscreen`, `orientation: landscape`, colori, icone 192/512/maskable), meta iOS (`apple-mobile-web-app-capable`, `apple-touch-icon`), service worker per giocare offline (vite-plugin-pwa o scritto a mano)
+- [ ] Invito a installare ("Aggiungi a Home") su iPhone, dove è l'unico modo per avere lo schermo intero
+- [ ] Pubblicazione mobile su hosting proprio (GitHub Pages / Netlify): dentro l'iframe di itch.io non si installa la PWA e il wake lock può essere bloccato
+- **Fatto quando**: installato su Android e iPhone parte a schermo intero, non ruota, non va in standby e funziona offline.
+
+#### Trasversale a M8–M10
+
+- [ ] Prove su dispositivi veri: telefono e tablet Android, iPhone, iPad (Chrome e Safari)
+- [ ] Misura della latenza del tocco rispetto alla tastiera; se gli umani sono più lenti, `npm run balance` con l'umano simulato "touch" e ritaratura delle CPU per la modalità touch
+- [ ] Prestazioni su un telefono di fascia bassa (fps, temperatura, batteria in 10 minuti)
+
+Idee per dopo, non pianificate: 3–4 giocatori con il dispositivo piatto sul tavolo e telefoni usati come controller (vedi [GDD §12.7](GDD.md#127-idee-per-dopo-non-pianificate)).
+
 ## 4. Ordine consigliato e rischi
 
 1. **M0 → M1 subito**: valida il divertimento del nucleo prima di investire in grafica.
@@ -177,3 +245,9 @@ tests/
    - _Ghosting tastiera_ con 4 giocatori → test tasti + layout rimappabile.
    - _Precisione del timing_ (latenza schermo/input) → stesso orologio per t0 e input, soglia di pareggio regolabile.
    - _Produzione dei gatti_ (4 gatti × 8 animazioni) → un unico generatore parametrico: 2 "razze" × variazioni di colore/collare; animazioni procedurali condivise.
+4. **Versione mobile**: M8 → M9 rendono il gioco giocabile su un telefono Android con la grafica attuale; M10 (dispositivo/PWA) può procedere in parallelo.
+   Rischi:
+   - _iPhone_: niente Fullscreen API né blocco orientamento nel browser → PWA installata, avviso di rotazione.
+   - _Gesti di sistema sui bordi_ (Indietro di Android, barra Home di iOS, tendina notifiche) vicini ai pulsanti → pulsanti staccati dal bordo, prove su dispositivo.
+   - _Spazio su telefono_: in 2 giocatori 4 pulsanti e 4 pannelli dei punteggi su uno schermo piccolo → HUD compatto, prove su un telefono piccolo.
+   - _Latenza del tocco_ diversa tra dispositivi → uguale per i due umani sullo stesso dispositivo; conta solo nel confronto con le CPU.

@@ -29,7 +29,7 @@ interface Colors {
 }
 
 const LOOKS: Record<CatBreed, [Colors, Colors]> = {
-  // Neri a pelo lungo: riflessi bruni, occhi ambra.
+  // Neri a pelo lungo (Priamo più nero, Mariù con riflessi bruni), occhi ambra.
   nero_pelolungo: [
     {
       fur: '#1e191d',
@@ -138,7 +138,7 @@ export class CatModel {
       belly.position.set(0, -0.2, 0.05);
       belly.scale.set(1, 0.6, 1.6);
       this.body.add(belly);
-      // Macchia bianca visibile dall'alto: sulla spalla (Poh) o sul posteriore (Margot).
+      // Macchia bianca visibile dall'alto: sulla spalla (Poh) o sul posteriore (Tempesta).
       const patch = mesh(new THREE.SphereGeometry(0.22, 6, 4), c.white);
       patch.position.set(look.variant === 0 ? 0.12 : -0.1, 0.17, look.variant === 0 ? 0.2 : -0.26);
       patch.scale.set(1.1, 0.55, 1.2);
@@ -195,7 +195,7 @@ export class CatModel {
       muzzle.scale.set(1.35, 0.85, 0.8);
       this.head.add(muzzle);
       if (look.variant === 1) {
-        // Margot: lista bianca sulla fronte.
+        // Tempesta: lista bianca sulla fronte.
         const blaze = mesh(new THREE.BoxGeometry(0.08, 0.26, 0.06), c.white);
         blaze.position.set(0, 0.12, 0.22);
         blaze.rotation.x = -0.6;

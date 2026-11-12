@@ -1,6 +1,6 @@
 # Pappa Reaction (Priamo Stadium)
 
-Minigioco di riflessi per 1–4 giocatori su tastiera, in Three.js: quattro gatti — Priamo, Tempesta, Poh e Margot — girano attorno a una ciotola coperta e devono scattare appena la mano alza il coperchio. Ma attenzione a finte e cacchette.
+Minigioco di riflessi per 1–4 giocatori su tastiera, in Three.js: quattro gatti — Priamo, Tempesta, Poh e Mariù — girano attorno a una ciotola coperta e devono scattare appena la mano alza il coperchio. Ma attenzione a finte e cacchette.
 
 ## Documentazione
 
@@ -13,6 +13,8 @@ Minigioco di riflessi per 1–4 giocatori su tastiera, in Three.js: quattro gatt
 
 **Versione 1.0.0** — tutte le milestone completate (M0–M7). Restano: playtest con persone vere, prove su Firefox/Edge/Safari, revisione manuale della grafica generativa.
 
+**In progettazione:** versione mobile per 1–2 giocatori (telefono o tablet in orizzontale, pulsanti touch SCATTO e FINTA) — vedi [GDD §12](docs/GDD.md#12-versione-mobile-12-giocatori) e le milestone M8–M10 della [roadmap](docs/ROADMAP.md).
+
 ## Come si gioca
 
 Dal titolo scegli **Gioca**, decidi chi è umano e chi CPU, poi **Inizia!**. Tasti predefiniti (si cambiano in **Comandi**):
@@ -22,7 +24,7 @@ Dal titolo scegli **Gioca**, decidi chi è umano e chi CPU, poi **Inizia!**. Tas
 | Priamo   | `Q`    | `A`   |
 | Tempesta | `T`    | `G`   |
 | Poh      | `O`    | `L`   |
-| Margot   | `↑`    | `↓`   |
+| Mariù    | `↑`    | `↓`   |
 
 `ESC` pausa · `INVIO` rivincita a fine partita · `M` audio sì/no (il browser lo sblocca alla prima pressione di un tasto).
 

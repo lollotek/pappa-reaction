@@ -153,3 +153,33 @@ export function cushion(color: string): Sprite {
     p.rect(12, 7, 2, 2, shade(color, -50));
   });
 }
+
+/** Freccina che indica il gatto di un giocatore umano (punta in basso). */
+export function playerArrow(color: string): Sprite {
+  // # contorno, o colore del giocatore, h riflesso, - ombra.
+  const rows = [
+    '..#####..',
+    '..#hoo#..',
+    '..#hoo#..',
+    '..#hoo#..',
+    '###hoo###',
+    '#hooooo-#',
+    '.#hooo-#.',
+    '..#ho-#..',
+    '...#o#...',
+    '....#....',
+  ];
+  const colors: Record<string, string> = {
+    '#': OUTLINE,
+    o: color,
+    h: shade(color, 60),
+    '-': shade(color, -45),
+  };
+  return sprite(rows[0].length, rows.length, (p) => {
+    rows.forEach((row, y) =>
+      [...row].forEach((ch, x) => {
+        if (colors[ch]) p.dot(x, y, colors[ch]);
+      }),
+    );
+  });
+}

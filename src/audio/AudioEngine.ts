@@ -27,7 +27,7 @@ export interface AudioOut {
   meow(player: number, mood: Mood): void;
 }
 
-/** Altezza di base del miagolio di ogni gatto (Priamo, Tempesta, Poh, Margot). */
+/** Altezza di base del miagolio di ogni gatto (Priamo, Tempesta, Poh, Mariù). */
 const MEOW_PITCH = [430, 370, 560, 650];
 
 const STORAGE_KEY = 'pappa.audio.muted';

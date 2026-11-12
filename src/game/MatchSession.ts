@@ -86,6 +86,10 @@ export class MatchSession {
     this.driver = new MatchDriver(this.machine, cpus);
     this.deps.audio.stopMusic();
     this.deps.scene.reset();
+    // Freccina sopra i gatti umani (non nella demo del titolo, che non ha HUD).
+    this.deps.scene.setMarkers(
+      this.options.players.map((c) => this.options.showHud && c === 'human'),
+    );
     this.deps.scene.effects = this.options.screenEffects;
     this.hud?.reset();
   }

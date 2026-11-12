@@ -2,7 +2,7 @@
 
 > Minigioco di riflessi per 1–4 giocatori su tastiera, realizzato in Three.js.
 > Nome provvisorio: **Pappa Reaction** (fa parte del progetto _Priamo Stadium_).
-> Versione documento: 0.1 — 2026-11-11
+> Versione documento: 0.2 — 2026-11-12 (aggiunta la versione mobile per 1–2 giocatori, §12)
 
 ---
 
@@ -19,17 +19,17 @@ Quattro gatti girano attorno a una ciotola coperta; quando una mano alza il cope
 
 ## 3. Personaggi
 
-| Gatto    | Razza / aspetto                       | Riferimento                  |
-| -------- | ------------------------------------- | ---------------------------- |
-| Priamo   | nero a pelo lungo _(provvisorio)_     | gatto_nero_pelolungo.png     |
-| Tempesta | nero a pelo lungo _(provvisorio)_     | gatto_nero_pelolungo.png     |
-| Poh      | europeo bianco e nero _(provvisorio)_ | gatto_europeo_bianconero.png |
-| Margot   | europeo bianco e nero _(provvisorio)_ | gatto_europeo_bianconero.png |
+| Gatto    | Razza / aspetto       | Riferimento                  |
+| -------- | --------------------- | ---------------------------- |
+| Priamo   | nero a pelo lungo     | gatto_nero_pelolungo.png     |
+| Tempesta | europeo bianco e nero | gatto_europeo_bianconero.png |
+| Poh      | europeo bianco e nero | gatto_europeo_bianconero.png |
+| Mariù    | nero a pelo lungo     | gatto_nero_pelolungo.png     |
 
 - 2 gatti **neri a pelo lungo** (occhi gialli/ambra) → [docs/reference/gatto_nero_pelolungo.png](reference/gatto_nero_pelolungo.png)
 - 2 gatti **europei bianco e nero** (tuxedo) → [docs/reference/gatto_europeo_bianconero.png](reference/gatto_europeo_bianconero.png)
 
-Per distinguere i due gatti dello stesso tipo: colore del collare/fiocco + colore del badge giocatore (P1 blu, P2 rosso, P3 verde, P4 giallo) sopra la testa, più piccole differenze di macchie/forma.
+Per distinguere i due gatti dello stesso tipo: colore del collare/fiocco + colore del badge giocatore (P1 blu, P2 rosso, P3 verde, P4 giallo) sopra la testa, più piccole differenze di macchie/forma. In partita una **freccina pixel** nel colore del giocatore, sopra la testa, indica i gatti controllati da persone (§9).
 
 Le statistiche dei gatti sono **identiche** (solo estetica), per mantenere il gioco equo.
 
@@ -136,6 +136,8 @@ Menu: frecce per muoversi e cambiare valore, `INVIO` conferma, `ESC` indietro / 
 
 Nota tecnica: molte tastiere hanno **ghosting** (alcune combinazioni di tasti premuti insieme non vengono rilevate). In **Comandi → Prova i tasti** i tasti premuti si illuminano: se uno non si accende premendolo insieme agli altri, la tastiera non regge quella combinazione. I tasti predefiniti sono distanti tra loro apposta.
 
+Su telefono e tablet (1–2 giocatori) si gioca con pulsanti touch ai lati dello schermo: vedi §12.
+
 ## 8. CPU
 
 Ogni slot non occupato da un umano è una CPU. La CPU usa le stesse regole e lo stesso cronometro degli umani: reagisce solo dal frame in cui il coperchio aperto è a schermo, con un tempo di reazione casuale (distribuzione normale, minimo 140 ms). Parametri per difficoltà (in `tuning.cpu`):
@@ -155,12 +157,12 @@ Valori tarati con `npm run balance` (400 partite simulate per riga) contro un "u
 
 - **Stile**: 2.5D pixel art cartoon. Gli **elementi principali sono low poly 3D** (gatti, pista, ciotola, coperchio, mano) con colori piatti/texture a filtro _nearest_; i **decori sono sprite 2D** billboard (piante, fiori, oggetti del salotto).
 - **Prima fase: grafica generativa** — modelli e texture costruiti via codice (primitive Three.js, texture disegnate su canvas). Verranno poi corretti o sostituiti con asset fatti a mano.
-- **Telecamera**: fissa, dall'alto inclinata (~55°), come negli screenshot di riferimento, che inquadra tutta la pista.
+- **Telecamera**: fissa, dall'alto inclinata (~55°), come negli screenshot di riferimento, che inquadra tutta la pista. Su mobile la camera resta la stessa (§12).
 - **Resa pixel**: la scena viene renderizzata a bassa risoluzione (es. 480×270) e poi ingrandita a schermo intero senza sfocatura → effetto pixel uniforme anche sugli oggetti 3D.
 - **Palette**: limitata (32–48 colori), toni caldi e morbidi.
 - **Animazioni dei gatti** (low poly, animazione procedurale per parti — corpo, testa, zampe, coda): camminata, scatto, finta, presa della pappa, bonk/stordito, schifato (cacchetta), festa, triste.
-- **HUD**: font pixel (Pixelify Sans); punteggi ai 4 angoli in pannelli con badge a testa di gatto nel colore del giocatore; tempo di reazione in una nuvoletta sopra il gatto; banner centrale ("ROUND N", esito del round); classifica finale con coriandoli.
-- **Distinguere i gatti**: collare nel colore del giocatore; Priamo più nero, Tempesta con riflessi bruni; Poh con macchia bianca sulla spalla, Margot sul posteriore e lista bianca sulla fronte.
+- **HUD**: font pixel (Pixelify Sans); punteggi ai 4 angoli in pannelli con badge a testa di gatto nel colore del giocatore; freccina pixel nel colore del giocatore sopra ogni gatto umano (nascosta mentre è stordito, quando ci sono le stelline); tempo di reazione in una nuvoletta sopra la freccina; banner centrale ("ROUND N", esito del round); classifica finale con coriandoli.
+- **Distinguere i gatti**: collare nel colore del giocatore; Priamo più nero, Mariù con riflessi bruni; Poh con macchia bianca sulla spalla, Tempesta sul posteriore e lista bianca sulla fronte.
 - **Riferimenti**: gli screenshot allegati sono solo riferimento di _ritmo e inquadratura_; grafica, ambientazione e personaggi sono originali.
 
 ## 10. Audio
@@ -176,3 +178,67 @@ Valori tarati con `npm run balance` (400 partite simulate per riga) contro un "u
 Tutti i valori sono in un file `src/config/tuning.ts` per poterli regolare durante i playtest:
 
 `roundCount=5`, `stunDuration=1.5s`, `circlingMin=2.5s`, `circlingMax=7s`, `revealWindow=1.5s`, `tieThreshold=30ms`, `fakeDashCooldown=1s`, `lastRoundPoopPenalty=-1`; finte del coperchio (`maxPerRound=2`, probabilità 35% +10% a round, durata 0.45 s, distanza minima 0.7 s, mai nei primi 0.6 s né negli ultimi 0.8 s del giro); pesi dei contenuti (cacchetta 20%); parametri CPU.
+
+## 12. Versione mobile (1–2 giocatori)
+
+> Stato: progettata il 2026-11-12, da realizzare (vedi [ROADMAP](ROADMAP.md) M8–M10).
+
+### 12.1 Idea
+
+Su telefono e tablet si gioca **in orizzontale** con dei **pulsanti touch** al posto dei tasti, fino a **2 giocatori umani**; gli altri gatti sono CPU. Le regole, i tempi, le CPU e la **camera** sono quelli della versione da tastiera (inclinata a ~55°, §9): tutti guardano lo schermo dallo stesso lato.
+
+| Modalità        | Come si tiene il dispositivo                                                                            | Pulsanti                                                                                          |
+| --------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| **1 giocatore** | in mano, in orizzontale                                                                                 | SCATTO sotto il pollice destro, FINTA sotto il pollice sinistro                                   |
+| **2 giocatori** | appoggiato sul tavolo o su uno stand, i due giocatori seduti uno accanto all'altro davanti allo schermo | giocatore 1: colonna a sinistra (SCATTO e FINTA uno sopra l'altro); giocatore 2: colonna a destra |
+
+Il primo gatto umano (nell'ordine Priamo, Tempesta, Poh, Mariù) ha i pulsanti a sinistra, il secondo a destra. I pulsanti hanno il colore e il nome del gatto.
+
+### 12.2 Dispositivi e distribuzione
+
+- **Telefono e tablet**, con un layout che si adatta: pulsanti grandi su tablet, compatti su telefono.
+- **Web + PWA installabile**: il gioco resta un sito; installato sulla schermata Home parte a schermo intero e funziona offline. Su iPhone è l'unico modo per avere lo schermo intero, perché Safari su iPhone non ha la Fullscreen API.
+- La versione mobile va pubblicata su un hosting proprio: dentro l'iframe di itch.io la PWA non si installa e il blocco dello standby può non funzionare.
+- Tastiera e tocco funzionano insieme (es. tablet con tastiera).
+
+### 12.3 Pulsanti touch
+
+- **SCATTO grande**, **FINTA più piccola**, ben separati e di forma diversa: un tocco sbagliato sullo scatto è una falsa partenza.
+- Dimensioni indicative: SCATTO ≥ 15 mm, FINTA ≥ 11 mm, almeno 8 mm tra i due; i valori finali dopo le prove su dispositivo.
+- I pulsanti **non toccano i bordi**: lì partono i gesti di sistema (Indietro di Android, barra Home di iOS, tendina delle notifiche). Rispettano le aree sicure (notch, angoli arrotondati).
+- Conta solo l'appoggio del dito (`pointerdown`, con il suo timestamp): tenere premuto vale una sola pressione. Il tempo di reazione si misura come da tastiera (§6.1).
+- Il feedback alla pressione è **identico per scatto e finta**: se la finta si illuminasse in modo diverso, verrebbe tradita.
+- Pulsante spento mentre il gatto è stordito o in panchina.
+- I pulsanti stanno ai lati, sopra la scena: la pista al centro resta libera. I pannelli dei punteggi negli angoli diventano più compatti sugli schermi piccoli per non finire sotto i pollici.
+- Il gioco passa in **modalità touch** al primo tocco; in Opzioni si può forzare (auto / sì / no). In modalità touch il menu Nuova partita permette al massimo 2 umani.
+
+### 12.4 Comandi senza tastiera
+
+| Tastiera                       | Modalità touch                                           |
+| ------------------------------ | -------------------------------------------------------- |
+| `ESC` pausa                    | pulsante pausa in alto al centro, con **tocco lungo**    |
+| `INVIO` / `ESC` a fine partita | pulsanti **Rivincita** e **Menu**                        |
+| `M` audio                      | tocco sull'indicatore audio dell'HUD                     |
+| —                              | Indietro di Android: pausa in partita, indietro nei menu |
+| Prova i tasti                  | **Prova i pulsanti**: i pulsanti toccati si accendono    |
+
+La rimappatura dei tasti resta disponibile solo con la tastiera.
+
+### 12.5 Dispositivo
+
+- **Schermo intero** alla prima azione dal menu (i browser lo concedono solo dopo un tocco) e voce in Opzioni.
+- **Blocco della rotazione** sull'orientamento orizzontale in cui si trova il dispositivo in quel momento, così non si capovolge se lo si inclina. Dove il blocco non esiste (iPhone nel browser), in verticale compare "Ruota il dispositivo" e la partita va in pausa.
+- **Niente standby** mentre il gioco è a schermo (Wake Lock), richiesto di nuovo a ogni ritorno in primo piano.
+- **Audio su iPhone**: il gioco chiede di suonare anche con l'interruttore silenzioso attivo, dove il browser lo permette.
+- Con le cuffie Bluetooth la musica arriva in ritardo: il cronometro non cambia, ma l'indizio "la musica si ferma" arriva tardi. Le regole lo segnalano.
+- Vibrazione: non usata per ora (esiste solo su Android).
+
+### 12.6 Equità del timing
+
+- In 2 giocatori entrambi usano lo stesso schermo e lo stesso touch: la latenza è uguale per tutti e due.
+- Il tocco può essere più lento della tastiera: le CPU (tarate su un umano da tastiera, §8) potrebbero risultare più forti. Si misura sui dispositivi e le CPU si ritarano per la modalità touch solo se serve.
+
+### 12.7 Idee per dopo (non pianificate)
+
+- **3–4 giocatori sul tavolo**: dispositivo piatto, due zone touch per angolo. Richiede una vista leggibile da entrambi i lati (camera dall'alto, HUD ruotato), zone lontane dai bordi e attenzione al limite di ~5 tocchi di iPhone.
+- **Telefoni come controller** (uno per giocatore o uno condiviso), abbinati con un QR: serve un server di collegamento (WebRTC o WebSocket), la sincronizzazione degli orologi tra i dispositivi e un margine prima di decidere il round. Da valutare misurando prima latenza e jitter della Wi-Fi.
