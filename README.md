@@ -63,7 +63,8 @@ Il gioco va servito via `http(s)`: aprendo `index.html` direttamente dal disco i
 
 Il gioco è una **PWA**: pubblicato su un sito **https** si può installare sulla schermata Home (Chrome: menu → _Installa app_; Safari su iPhone: _Condividi → Aggiungi alla schermata Home_). Installato parte a schermo intero e in orizzontale, e dopo la prima apertura funziona anche **offline**. Sul telefono il gioco blocca anche la rotazione (Android) e lo standby.
 
-- Per il telefono conviene un hosting proprio (GitHub Pages, Netlify): dentro la pagina di itch.io il gioco non si installa e lo standby può non essere bloccato.
+- Per il telefono conviene un hosting proprio: dentro la pagina di itch.io il gioco non si installa e lo standby può non essere bloccato.
+- **GitHub Pages**: a ogni push su `main` il workflow `.github/workflows/pages.yml` esegue test e build e pubblica `dist/` (in _Settings → Pages_ la sorgente deve essere _GitHub Actions_). Il gioco è su `https://lollotek.github.io/pappa-reaction/`.
 - Service worker e blocco dello standby funzionano solo su `https` o `localhost`. Con `npm run dev:lan` (http in rete locale) si provano comandi touch, schermo intero e rotazione; per provare anche il resto su Android si può aprire `chrome://flags/#unsafely-treat-insecure-origin-as-secure` sul telefono e aggiungere l'indirizzo del PC (es. `http://192.168.1.3:4173` con `npx vite preview --host`).
 - Le icone (`public/icons/`) si rigenerano dalla favicon con `npm run icons`.
 
