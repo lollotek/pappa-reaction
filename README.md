@@ -59,4 +59,12 @@ npm run package  # build + release/pappa-reaction-<versione>.zip
 
 Il gioco va servito via `http(s)`: aprendo `index.html` direttamente dal disco il browser blocca i moduli JavaScript. Per provare la build in locale: `npm run build` e poi `npx vite preview`.
 
+### Telefono e tablet (PWA)
+
+Il gioco è una **PWA**: pubblicato su un sito **https** si può installare sulla schermata Home (Chrome: menu → _Installa app_; Safari su iPhone: _Condividi → Aggiungi alla schermata Home_). Installato parte a schermo intero e in orizzontale, e dopo la prima apertura funziona anche **offline**. Sul telefono il gioco blocca anche la rotazione (Android) e lo standby.
+
+- Per il telefono conviene un hosting proprio (GitHub Pages, Netlify): dentro la pagina di itch.io il gioco non si installa e lo standby può non essere bloccato.
+- Service worker e blocco dello standby funzionano solo su `https` o `localhost`. Con `npm run dev:lan` (http in rete locale) si provano comandi touch, schermo intero e rotazione; per provare anche il resto su Android si può aprire `chrome://flags/#unsafely-treat-insecure-origin-as-secure` sul telefono e aggiungere l'indirizzo del PC (es. `http://192.168.1.3:4173` con `npx vite preview --host`).
+- Le icone (`public/icons/`) si rigenerano dalla favicon con `npm run icons`.
+
 Overlay di debug: aggiungere `?debug` all'indirizzo (`F3` lo nasconde e lo rimostra).

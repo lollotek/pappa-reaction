@@ -118,6 +118,15 @@ function startGame(root: HTMLElement): void {
   requestAnimationFrame(frame);
 }
 
+// PWA: service worker per giocare offline (solo nella build pubblicata, su https o localhost).
+if (import.meta.env.PROD && 'serviceWorker' in navigator && window.isSecureContext) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {
+      /* senza service worker il gioco funziona lo stesso, solo non offline */
+    });
+  });
+}
+
 function safeStorage(): KeyValueStore | null {
   try {
     return window.localStorage;

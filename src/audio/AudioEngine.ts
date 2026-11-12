@@ -261,6 +261,9 @@ export class AudioEngine implements AudioOut {
 
   private unlock(): void {
     if (!this.ctx) {
+      // iPhone: senza "playback" l'interruttore silenzioso spegnerebbe il gioco (Safari 17+).
+      const session = (navigator as Navigator & { audioSession?: { type: string } }).audioSession;
+      if (session) session.type = 'playback';
       const ctx = new AudioContext({ latencyHint: 'interactive' });
       this.ctx = ctx;
       this.master = ctx.createGain();

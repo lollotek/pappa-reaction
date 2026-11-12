@@ -25,6 +25,8 @@ export interface Settings {
   screenEffects: boolean;
   /** Pulsanti touch: automatici (al primo tocco), sempre o mai. */
   touch: TouchPref;
+  /** In modalità touch: schermo intero (e rotazione bloccata) quando si gioca. */
+  fullscreen: boolean;
 }
 
 export const ROUND_OPTIONS = [3, 5, 7] as const;
@@ -50,6 +52,7 @@ export function defaultSettings(slots: readonly PlayerSlot[]): Settings {
     trickyReferee: false,
     screenEffects: true,
     touch: 'auto',
+    fullscreen: true,
   };
 }
 
@@ -94,6 +97,7 @@ export function loadSettings(store: KeyValueStore | null, slots: readonly Player
     trickyReferee: typeof raw.trickyReferee === 'boolean' ? raw.trickyReferee : def.trickyReferee,
     screenEffects: typeof raw.screenEffects === 'boolean' ? raw.screenEffects : def.screenEffects,
     touch: TOUCH_PREFS.includes(raw.touch as TouchPref) ? (raw.touch as TouchPref) : def.touch,
+    fullscreen: typeof raw.fullscreen === 'boolean' ? raw.fullscreen : def.fullscreen,
   };
 }
 

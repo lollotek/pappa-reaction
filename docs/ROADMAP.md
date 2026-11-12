@@ -188,10 +188,11 @@ src/
     ButtonTest.ts         "Prova i pulsanti" (equivalente di Prova tasti)
   platform/
     BackButton.ts         tasto/gesto Indietro → pausa o menu precedente
-    Device.ts             schermo intero, blocco orientamento, wake lock, audio session iOS (M10)
+    Device.ts             schermo intero, blocco orientamento, wake lock (M10)
+    serviceWorker.ts      codice del service worker generato a ogni build (M10)
     touchMode.ts          logica pura: quando attivare la modalità touch (auto / sì / no)
 public/
-  manifest.webmanifest, icone PWA (192, 512, maskable), apple-touch-icon
+  manifest.webmanifest, icons/ (192, 512, maskable, apple-touch-icon) generate da scripts/icons.mjs
 ```
 
 #### M8 — Input touch ✅ (2026-11-12, provato in emulazione: da provare su dispositivi veri)
@@ -219,17 +220,19 @@ public/
 - [x] Voci di menu alte almeno 44 px in modalità touch
 - **Fatto quando**: dal titolo alla rivincita si gioca senza mai usare la tastiera. ✅ in emulazione
 
-#### M10 — Dispositivo e PWA
+#### M10 — Dispositivo e PWA ✅ (2026-11-12, provato in emulazione e in locale: da provare su dispositivi veri)
 
-- [ ] Schermo intero alla prima azione ("Gioca"/"Inizia!", serve un gesto dell'utente); voce in Opzioni; ripristino se il sistema lo chiude
-- [ ] Blocco orientamento sull'orizzontale **corrente** (`landscape-primary` o `-secondary`, non `landscape` generico, così il dispositivo non si capovolge inclinandolo)
-- [ ] Ripiego dove il blocco non esiste (iPhone, browser senza schermo intero): avviso "Ruota il dispositivo" in verticale e pausa automatica
-- [ ] Wake lock (`navigator.wakeLock`) mentre il gioco è visibile, richiesto di nuovo a ogni ritorno in primo piano
-- [ ] iOS: `navigator.audioSession.type = 'playback'` perché l'interruttore silenzioso non spenga il gioco (se disponibile)
-- [ ] Viewport: `viewport-fit=cover`, aree sicure `env(safe-area-inset-*)`, altezza `100dvh`
-- [ ] PWA: manifest (`display: fullscreen`, `orientation: landscape`, colori, icone 192/512/maskable), meta iOS (`apple-mobile-web-app-capable`, `apple-touch-icon`), service worker per giocare offline (vite-plugin-pwa o scritto a mano)
-- [ ] Invito a installare ("Aggiungi a Home") su iPhone, dove è l'unico modo per avere lo schermo intero
-- [ ] Pubblicazione mobile su hosting proprio (GitHub Pages / Netlify): dentro l'iframe di itch.io non si installa la PWA e il wake lock può essere bloccato
+- [x] Schermo intero (`platform/Device.ts`) a "Gioca", "Inizia!" e "Riprendi" (servono un gesto dell'utente), solo in modalità touch; voce **Schermo intero** in Opzioni. Se il sistema lo chiude (gesto Indietro, notifica) la partita va in pausa e "Riprendi" lo richiede
+- [x] Blocco orientamento sull'orizzontale **corrente** (`landscape-primary` o `-secondary`) appena si entra a schermo intero
+- [x] Ripiego: in verticale, con i pulsanti touch, avviso "Ruota il dispositivo" (telefono pixel che gira) e pausa automatica, anche se la partita parte già in verticale
+- [x] Wake lock in modalità touch, richiesto di nuovo a ogni ritorno in primo piano (serve https o localhost)
+- [x] iOS: `navigator.audioSession.type = 'playback'` alla creazione dell'audio (Safari 17+)
+- [x] Viewport `viewport-fit=cover`; pannelli dei punteggi, pulsante pausa e pulsanti touch dentro le aree sicure (`env(safe-area-inset-*)`). Il gioco occupa già tutto lo schermo con `position: fixed; inset: 0`, quindi `100dvh` non serve
+- [x] PWA: `manifest.webmanifest` (`display: fullscreen`, `orientation: landscape`, colori, icone 192/512/maskable), meta iOS e Android, icone PNG generate dalla favicon con `npm run icons` (`scripts/icons.mjs`, senza dipendenze)
+- [x] Service worker scritto a mano, generato a ogni build da un plugin in `vite.config.ts` (`src/platform/serviceWorker.ts`): pagina, codice, stili e font woff2 in cache subito, icone alla prima richiesta; pagina prima dalla rete, file con hash dalla cache; cache vecchie cancellate. Registrato solo nella build pubblicata e su https/localhost. Provato: con il server spento il gioco riparte dalla cache
+- [x] Invito a installare ("Condividi → Aggiungi alla schermata Home") sul titolo, solo dove lo schermo intero da browser non esiste (iPhone) e il gioco non è già installato
+- [ ] Pubblicazione mobile su hosting proprio con https (GitHub Pages / Netlify): dentro l'iframe di itch.io non si installa la PWA e il wake lock può essere bloccato
+- [ ] Prova su dispositivi veri: installazione su Android e iPhone, schermo intero, rotazione bloccata, niente standby, offline
 - **Fatto quando**: installato su Android e iPhone parte a schermo intero, non ruota, non va in standby e funziona offline.
 
 #### Trasversale a M8–M10

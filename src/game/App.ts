@@ -16,6 +16,7 @@ import { MergedInput, TouchInput, type InputSource } from '../input/InputSource'
 import type { Keyboard } from '../input/Keyboard';
 import { touchLayout, type Insets } from '../input/touchLayout';
 import { BackButton } from '../platform/BackButton';
+import { Device, shouldSuggestInstall } from '../platform/Device';
 import {
   MAX_TOUCH_HUMANS,
   TOUCH_PREFS,
@@ -82,6 +83,9 @@ export class App {
   private readonly pauseButton: PauseButton;
   private readonly buttonTest: ButtonTest;
   private readonly backButton: BackButton;
+  private readonly device: Device;
+  private readonly rotateHint: HTMLElement;
+  private readonly portrait = window.matchMedia?.('(orientation: portrait)');
   /** Modalità touch attiva (pulsanti a schermo, menu adattati). */
   private touchMode = false;
   private sawTouch = false;
@@ -105,6 +109,14 @@ export class App {
     });
     this.buttonTest = new ButtonTest(deps.container, this.touchButtons, () => this.showControls());
     this.backButton = new BackButton(() => this.handleBack());
+    // Schermo intero chiuso (gesto Indietro, notifica…) durante la partita: pausa.
+    this.device = new Device(() => this.autoPauseTouch());
+    this.rotateHint = document.createElement('div');
+    this.rotateHint.className = 'rotate-hint';
+    this.rotateHint.innerHTML =
+      '<div class="rotate-phone"></div><p>Ruota il dispositivo<br />in orizzontale</p>';
+    deps.container.appendChild(this.rotateHint);
+
     this.logo = document.createElement('div');
     this.logo.className = 'title-logo';
     this.logo.innerHTML = '<h1>Pappa Reaction</h1><p>Priamo Stadium</p>';
@@ -145,6 +157,8 @@ export class App {
 
   frame(realNow: number): void {
     const inputs = this.input.drain();
+    // In verticale non si gioca: pausa (l'avviso "ruota il dispositivo" copre lo schermo).
+    if (this.portrait?.matches) this.autoPauseTouch();
     this.updateTouchUi(realNow);
     if (this.session) {
       this.session.frame(realNow, this.mode === 'match' ? inputs : []);
@@ -259,6 +273,7 @@ export class App {
 
   private resume(): void {
     if (!this.session) return;
+    this.enterFullscreenIfWanted();
     this.closeMenus();
     this.session.resume(performance.now());
     this.deps.audio.resume();
@@ -300,12 +315,20 @@ export class App {
     this.logo.hidden = false;
     this.openMenu(
       new MenuModel('', [
-        { kind: 'action', label: 'Gioca', onSelect: () => this.showSetup(), accent: true },
+        {
+          kind: 'action',
+          label: 'Gioca',
+          onSelect: () => {
+            this.enterFullscreenIfWanted();
+            this.showSetup();
+          },
+          accent: true,
+        },
         { kind: 'action', label: 'Regole', onSelect: () => this.showRules() },
         { kind: 'action', label: 'Comandi', onSelect: () => this.showControls() },
         { kind: 'action', label: 'Opzioni', onSelect: () => this.showOptions() },
       ]),
-      '',
+      () => this.installHintHtml(),
       'menu-title',
     );
   }
@@ -343,7 +366,15 @@ export class App {
         get: () => ROUND_OPTIONS.indexOf(this.settings.roundCount as 3 | 5 | 7),
         set: (v) => this.update({ roundCount: ROUND_OPTIONS[v] }),
       },
-      { kind: 'action', label: 'Inizia!', onSelect: () => this.startMatch(), accent: true },
+      {
+        kind: 'action',
+        label: 'Inizia!',
+        onSelect: () => {
+          this.enterFullscreenIfWanted();
+          this.startMatch();
+        },
+        accent: true,
+      },
       { kind: 'action', label: 'Indietro', onSelect: () => this.showTitle() },
     ];
     this.openMenu(new MenuModel('Nuova partita', items, () => this.showTitle()), () =>
@@ -466,12 +497,27 @@ export class App {
         },
       },
       {
+        kind: 'choice',
+        label: 'Schermo intero',
+        options: ['sì', 'no'],
+        get: () => (this.settings.fullscreen ? 0 : 1),
+        set: (v) => {
+          this.update({ fullscreen: v === 0 });
+          if (v === 0) void this.device.exitFullscreen();
+          else this.enterFullscreenIfWanted();
+        },
+      },
+      {
         kind: 'info',
         label: 'Arbitro furbo: alle finte del coperchio la musica fa un singhiozzo.',
       },
       {
         kind: 'info',
         label: 'Pulsanti touch "auto": compaiono al primo tocco sullo schermo.',
+      },
+      {
+        kind: 'info',
+        label: 'Schermo intero: solo con i pulsanti touch; blocca anche la rotazione.',
       },
       { kind: 'action', label: 'Indietro', onSelect: () => this.showTitle() },
     ];
@@ -569,11 +615,37 @@ export class App {
     if (on === this.touchMode) return;
     this.touchMode = on;
     document.body.classList.toggle('touch-mode', on);
+    // Niente standby mentre si gioca col dito (il dispositivo non riceve tasti).
+    this.device.keepAwake(on);
     if (on) {
       const players = limitHumans(this.settings.players, MAX_TOUCH_HUMANS);
       if (players.some((p, i) => p !== this.settings.players[i])) this.update({ players });
     }
     this.view.render();
+  }
+
+  /** Schermo intero e blocco della rotazione, se in modalità touch e voluto (serve un gesto). */
+  private enterFullscreenIfWanted(): void {
+    if (this.touchMode && this.settings.fullscreen) void this.device.enterFullscreen();
+  }
+
+  /** Pausa per motivi del dispositivo (verticale, schermo intero chiuso). */
+  private autoPauseTouch(): void {
+    if (this.touchMode && this.mode === 'match' && this.session && !this.session.finished) {
+      this.pause();
+    }
+  }
+
+  /** Su iPhone lo schermo intero si ottiene solo installando il gioco sulla Home. */
+  private installHintHtml(): string {
+    const show = shouldSuggestInstall({
+      touch: this.touchMode,
+      fullscreenApi: this.device.fullscreenSupported,
+      standalone: this.device.standalone,
+    });
+    return show
+      ? '<p class="menu-text install-hint">Schermo intero: <b>Condividi → Aggiungi alla schermata Home</b>, poi apri il gioco da lì.</p>'
+      : '';
   }
 
   /** Mostra/nasconde pulsanti e pausa touch secondo la schermata; stati per frame. */
