@@ -18,12 +18,13 @@ if (!container) throw new Error('#app mancante');
 const pixel = new PixelRenderer(container, tuning.render.targetHeight);
 const params = new URLSearchParams(location.search);
 
-// Overlay di debug (attiva/disattiva con F3).
+// Overlay di debug (fps, risoluzione, seed, fase): solo con `?debug`, poi F3 lo mostra/nasconde.
 const debug = document.getElementById('debug')!;
-let showDebug = import.meta.env.DEV;
+const debugAllowed = params.has('debug');
+let showDebug = debugAllowed;
 debug.hidden = !showDebug;
 window.addEventListener('keydown', (e) => {
-  if (e.code === 'F3') {
+  if (e.code === 'F3' && debugAllowed) {
     e.preventDefault();
     showDebug = !showDebug;
     debug.hidden = !showDebug;

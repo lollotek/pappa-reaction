@@ -90,7 +90,7 @@ export class MenuView {
       ${this.extra()}
       <ul>${rows}</ul>
       <p class="menu-message">${escape(m.message)}</p>
-      <p class="menu-help">↑↓ scegli · ←→ cambia · INVIO conferma · ESC indietro</p>`;
+      <p class="menu-help kbd-only">↑↓ scegli · ←→ cambia · INVIO conferma · ESC indietro</p>`;
   }
 
   private row(item: MenuItem, i: number, selected: boolean, capturing: boolean): string {

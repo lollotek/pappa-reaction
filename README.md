@@ -28,17 +28,20 @@ Dal titolo scegli **Gioca**, decidi chi è umano e chi CPU, poi **Inizia!**. Tas
 
 `ESC` pausa · `INVIO` rivincita a fine partita · `M` audio sì/no (il browser lo sblocca alla prima pressione di un tasto).
 
+**Su telefono e tablet** (in orizzontale, 1–2 giocatori) compaiono i pulsanti touch al primo tocco: da soli SCATTO a destra e FINTA a sinistra, in due una colonna per lato. Pausa con un tocco lungo sul pulsante in alto; il tasto Indietro di Android mette in pausa. In **Opzioni → Pulsanti touch** si possono forzare sì/no.
+
 ### Parametri URL per lo sviluppo
 
 - `?cpu=2,3,4&diff=normale&seed=123` salta il menu e avvia subito una partita (`cpu=none` tutti umani; `seed` rigioca una partita identica)
 - `?vetrina` mostra i 4 gatti da vicino per rivedere modelli e pose (←/→ posa, SPAZIO rotazione, A automatico)
-- `F3` overlay di debug; in sviluppo `window.__pappa` dà accesso a partita e audio dalla console
+- `?debug` mostra l'overlay di debug (fps, risoluzione, seed, fase del round); con `?debug` attivo `F3` lo nasconde e lo rimostra. In sviluppo `window.__pappa` dà accesso a partita e audio dalla console
 
 ## Comandi
 
 ```bash
 npm install      # dipendenze
 npm run dev      # server di sviluppo su http://localhost:5173
+npm run dev:lan  # come sopra, raggiungibile dal telefono nella stessa rete
 npm test         # test della logica (Vitest)
 npm run build    # typecheck + build statica in dist/
 npm run lint     # ESLint
@@ -56,4 +59,4 @@ npm run package  # build + release/pappa-reaction-<versione>.zip
 
 Il gioco va servito via `http(s)`: aprendo `index.html` direttamente dal disco il browser blocca i moduli JavaScript. Per provare la build in locale: `npm run build` e poi `npx vite preview`.
 
-In gioco: `F3` mostra/nasconde l'overlay di debug.
+Overlay di debug: aggiungere `?debug` all'indirizzo (`F3` lo nasconde e lo rimostra).

@@ -53,6 +53,8 @@ export class AudioEngine implements AudioOut {
     const unlock = () => this.unlock();
     target.addEventListener('keydown', unlock);
     target.addEventListener('pointerdown', unlock);
+    // Col dito il browser concede l'audio solo al rilascio (pointerup), non all'appoggio.
+    target.addEventListener('pointerup', unlock);
   }
 
   /** true quando il browser ha concesso l'audio. */

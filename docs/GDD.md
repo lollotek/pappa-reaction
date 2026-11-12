@@ -204,13 +204,13 @@ Il primo gatto umano (nell'ordine Priamo, Tempesta, Poh, Mariù) ha i pulsanti a
 ### 12.3 Pulsanti touch
 
 - **SCATTO grande**, **FINTA più piccola**, ben separati e di forma diversa: un tocco sbagliato sullo scatto è una falsa partenza.
-- Dimensioni indicative: SCATTO ≥ 15 mm, FINTA ≥ 11 mm, almeno 8 mm tra i due; i valori finali dopo le prove su dispositivo.
+- Dimensioni: SCATTO tra 64 e 128 px CSS (il 26% dell'altezza dello schermo, ~15 mm o più su un telefono), FINTA al 72% dello scatto, almeno 16 px tra due pulsanti e 18 px dal bordo; i valori finali dopo le prove su dispositivo. SCATTO è rotondo, FINTA quadrata.
 - I pulsanti **non toccano i bordi**: lì partono i gesti di sistema (Indietro di Android, barra Home di iOS, tendina delle notifiche). Rispettano le aree sicure (notch, angoli arrotondati).
 - Conta solo l'appoggio del dito (`pointerdown`, con il suo timestamp): tenere premuto vale una sola pressione. Il tempo di reazione si misura come da tastiera (§6.1).
 - Il feedback alla pressione è **identico per scatto e finta**: se la finta si illuminasse in modo diverso, verrebbe tradita.
 - Pulsante spento mentre il gatto è stordito o in panchina.
 - I pulsanti stanno ai lati, sopra la scena: la pista al centro resta libera. I pannelli dei punteggi negli angoli diventano più compatti sugli schermi piccoli per non finire sotto i pollici.
-- Il gioco passa in **modalità touch** al primo tocco; in Opzioni si può forzare (auto / sì / no). In modalità touch il menu Nuova partita permette al massimo 2 umani.
+- Il gioco passa in **modalità touch** al primo tocco (o se il puntatore principale è un dito); in Opzioni **Pulsanti touch** si può forzare (auto / sì / no). In modalità touch il menu Nuova partita permette al massimo 2 umani.
 
 ### 12.4 Comandi senza tastiera
 

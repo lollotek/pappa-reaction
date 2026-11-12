@@ -81,7 +81,7 @@ tests/
 - [x] Vite + TypeScript + Three.js + Vitest
 - [x] Struttura cartelle, lint (ESLint) / format (Prettier)
 - [x] Pipeline pixel: risoluzione interna bassa + upscale a scala intera, resize finestra
-- [x] Game loop a timestep fisso (120 Hz) + overlay debug (F3)
+- [x] Game loop a timestep fisso (120 Hz) + overlay debug (dal 2026-11-12 solo con `?debug`, poi F3)
 - [x] Scena di prova generativa: tappeto-pista, ciotola e coperchio low poly, 4 segnaposto gatti che girano, vasi di fiori 2D billboard
 - **Fatto quando**: la scena di prova gira a schermo con look pixellato. ✅ (2026-11-11)
 
@@ -180,41 +180,44 @@ Nuovi moduli previsti:
 ```
 src/
   input/
-    InputSource.ts        interfaccia comune drain()/clear() per tastiera e tocco
-    TouchInput.ts         pointerdown → TimedInput (e.timeStamp), una pressione per tocco
+    InputSource.ts        interfaccia comune drain()/clear(), MergedInput, TouchInput (pointerdown → TimedInput)
     touchLayout.ts        logica pura: rettangoli dei pulsanti per 1 o 2 giocatori, viewport, aree sicure, classe di dispositivo; hit test
   ui/
     TouchButtons.ts       pulsanti nel DOM (colore e nome del gatto), stati attivo/stordito/panchina
+    PauseButton.ts        pausa con tocco lungo
     ButtonTest.ts         "Prova i pulsanti" (equivalente di Prova tasti)
   platform/
-    Device.ts             schermo intero, blocco orientamento, wake lock, tasto Indietro, audio session iOS
+    BackButton.ts         tasto/gesto Indietro → pausa o menu precedente
+    Device.ts             schermo intero, blocco orientamento, wake lock, audio session iOS (M10)
     touchMode.ts          logica pura: quando attivare la modalità touch (auto / sì / no)
 public/
   manifest.webmanifest, icone PWA (192, 512, maskable), apple-touch-icon
 ```
 
-#### M8 — Input touch
+#### M8 — Input touch ✅ (2026-11-12, provato in emulazione: da provare su dispositivi veri)
 
-- [ ] `InputSource` comune; `App` legge da tastiera e tocco insieme (un tablet con tastiera usa entrambi)
-- [ ] `TouchInput`: `pointerdown` su un pulsante → `{player, action, t: e.timeStamp}`; tocco tenuto = una sola pressione
-- [ ] `touchLayout` per 1 giocatore (pollici ai due lati) e 2 giocatori (una colonna per lato), telefono e tablet (dimensioni minime in mm, distanze dal bordo, aree sicure); unit test su layout e hit test
-- [ ] `TouchButtons`: colore e nome del gatto; feedback alla pressione **identico per scatto e finta** (non deve tradire la finta); pulsante spento da stordito e in panchina
-- [ ] Pannelli dei punteggi più compatti sugli schermi piccoli, mai sotto i pulsanti
-- [ ] Blocco dei gesti del browser: `touch-action: none`, `overscroll-behavior: none`, niente menu/lente al tocco lungo (`-webkit-touch-callout`, `contextmenu`), niente evidenziazione al tocco, niente zoom
-- [ ] Modalità touch automatica al primo tocco (o con `pointer: coarse`), scelta manuale in Opzioni; in modalità touch al massimo 2 umani in Nuova partita
-- [ ] Server di sviluppo raggiungibile dal telefono in LAN con HTTPS (wake lock e service worker richiedono un contesto sicuro)
+- [x] `InputSource` comune (`MergedInput`); `App` legge da tastiera e tocco insieme (un tablet con tastiera usa entrambi)
+- [x] `TouchInput`: `pointerdown` su un pulsante → `{player, action, t: e.timeStamp}`; tocco tenuto = una sola pressione
+- [x] `touchLayout` per 1 giocatore (pollici ai due lati, a metà altezza) e 2 giocatori (una colonna per lato, FINTA sopra e SCATTO sotto). SCATTO 64–128 px CSS (26% dell'altezza), FINTA al 72%, almeno 16 px tra i pulsanti, almeno 18 px dal bordo più le aree sicure; unit test su 4 schermi tipici
+- [x] `TouchButtons`: colore e nome del gatto, SCATTO rotondo e FINTA quadrata; feedback alla pressione **identico per scatto e finta**; pulsanti spenti da stordito e in panchina
+- [x] Pannelli dei punteggi, banner, menu e titolo compatti sugli schermi bassi (`max-height: 500px`), mai sotto i pulsanti
+- [x] Blocco dei gesti del browser: `touch-action: none` (i menu scorrono in verticale), `overscroll-behavior: none`, niente menu/lente al tocco lungo, niente evidenziazione al tocco
+- [x] Modalità touch automatica al primo tocco o con `pointer: coarse`; **Pulsanti touch: auto / sì / no** in Opzioni; in modalità touch al massimo 2 umani in Nuova partita (chi c'era da prima torna CPU)
+- [x] Audio sbloccato anche al rilascio del dito (`pointerup`): col tocco il browser concede l'audio solo lì
+- [x] `npm run dev:lan`: server di sviluppo raggiungibile dal telefono nella rete locale (HTTP; l'HTTPS serve per wake lock e service worker e arriva con M10)
+- [ ] Prova su un telefono Android: partita intera in 1 e in 2 giocatori, tempi coerenti con quelli da tastiera
 - **Fatto quando**: su un telefono Android si gioca una partita intera in 1 e in 2 giocatori, e i tempi misurati sono coerenti con quelli da tastiera.
 
-#### M9 — Comandi e menu senza tastiera
+#### M9 — Comandi e menu senza tastiera ✅ (2026-11-12, provato in emulazione)
 
-- [ ] Pausa: pulsante in alto al centro con **tocco lungo** (~0,6 s) per evitare pause accidentali
-- [ ] Fine partita: pulsanti **Rivincita** e **Menu** (al posto di INVIO/ESC)
-- [ ] Audio sì/no toccando l'indicatore dell'HUD (al posto di `M`)
-- [ ] Tasto/gesto **Indietro** di Android (`history.pushState` + `popstate`) → pausa in partita, indietro nei menu
-- [ ] In modalità touch, Comandi mostra **Prova i pulsanti** al posto della rimappatura
-- [ ] Regole: testo che parla di pulsanti invece di tasti
-- [ ] Voci di menu grandi abbastanza per il dito (min. ~44 px CSS)
-- **Fatto quando**: dal titolo alla rivincita si gioca senza mai usare la tastiera.
+- [x] Pausa: pulsante in alto al centro con **tocco lungo** (0,6 s, barra che si riempie); un tocco breve non fa nulla. Round e audio scendono sotto il pulsante
+- [x] Fine partita: pulsanti **Rivincita** e **Menu** (anche col mouse; INVIO/ESC restano)
+- [x] Audio sì/no toccando l'indicatore dell'HUD (al posto di `M`); il primo tocco sblocca soltanto
+- [x] Tasto/gesto **Indietro** (`platform/BackButton.ts`, `history.pushState` + `popstate`): in partita pausa, in pausa riprende, nei menu torna indietro, a fine partita torna al titolo; sul titolo esce dal gioco
+- [x] In modalità touch, Comandi spiega i pulsanti e offre **Prova i pulsanti** (conta le dita appoggiate insieme) al posto della rimappatura
+- [x] Regole: paragrafo per telefono e tablet; i suggerimenti con i tasti spariscono in modalità touch
+- [x] Voci di menu alte almeno 44 px in modalità touch
+- **Fatto quando**: dal titolo alla rivincita si gioca senza mai usare la tastiera. ✅ in emulazione
 
 #### M10 — Dispositivo e PWA
 

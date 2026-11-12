@@ -1,3 +1,4 @@
+import { TOUCH_PREFS, type TouchPref } from '../platform/touchMode';
 import type { PlayerSlot } from './controls';
 import { tuning, type Difficulty } from './tuning';
 
@@ -22,6 +23,8 @@ export interface Settings {
   trickyReferee: boolean;
   /** Lampo al reveal, scosse e zoom della camera. */
   screenEffects: boolean;
+  /** Pulsanti touch: automatici (al primo tocco), sempre o mai. */
+  touch: TouchPref;
 }
 
 export const ROUND_OPTIONS = [3, 5, 7] as const;
@@ -46,6 +49,7 @@ export function defaultSettings(slots: readonly PlayerSlot[]): Settings {
     sfxVolume: 8,
     trickyReferee: false,
     screenEffects: true,
+    touch: 'auto',
   };
 }
 
@@ -89,6 +93,7 @@ export function loadSettings(store: KeyValueStore | null, slots: readonly Player
     sfxVolume: volume(raw.sfxVolume, def.sfxVolume),
     trickyReferee: typeof raw.trickyReferee === 'boolean' ? raw.trickyReferee : def.trickyReferee,
     screenEffects: typeof raw.screenEffects === 'boolean' ? raw.screenEffects : def.screenEffects,
+    touch: TOUCH_PREFS.includes(raw.touch as TouchPref) ? (raw.touch as TouchPref) : def.touch,
   };
 }
 

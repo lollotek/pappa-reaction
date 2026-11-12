@@ -98,6 +98,11 @@ export class MatchSession {
     return this.machine.phase === 'final';
   }
 
+  /** Tempo di gioco (si ferma in pausa). */
+  now(realNow: number): number {
+    return this.clock.now(realNow);
+  }
+
   get paused(): boolean {
     return this.clock.paused;
   }

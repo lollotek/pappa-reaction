@@ -66,8 +66,8 @@ export class Hud {
         <span class="hud-key">${
           cpuLabels[i]
             ? `<span class="hud-cpu">${cpuLabels[i]}</span>`
-            : `scatto <kbd>${keyLabel(keys[i].dash)}</kbd>
-               finta <kbd>${keyLabel(keys[i].fake)}</kbd>`
+            : `<span class="kbd-only">scatto <kbd>${keyLabel(keys[i].dash)}</kbd>
+               finta <kbd>${keyLabel(keys[i].fake)}</kbd></span>`
         }</span>`;
       this.root.appendChild(panel);
       this.scores.push(panel.querySelector('.hud-score')!);
@@ -84,6 +84,7 @@ export class Hud {
     this.roundLabel = this.el('hud-round');
     this.finalPanel = this.el('hud-final');
     this.audioLabel = this.el('hud-audio');
+    this.audioLabel.dataset.audioToggle = '';
     this.flash = this.el('hud-flash');
     this.finalPanel.hidden = true;
   }
@@ -93,8 +94,8 @@ export class Hud {
     this.audioLabel.dataset.status = status;
     this.audioLabel.innerHTML =
       status === 'locked'
-        ? 'premi un tasto per l’audio'
-        : `<kbd>M</kbd> audio ${status === 'on' ? 'sì' : 'no'}`;
+        ? '<span class="kbd-only">premi un tasto</span><span class="touch-only">tocca qui</span> per l’audio'
+        : `<kbd class="kbd-only">M</kbd> audio ${status === 'on' ? 'sì' : 'no'}`;
   }
 
   /** Rimuove l'HUD dalla pagina (fine sessione). */
@@ -197,7 +198,10 @@ export class Hud {
     this.finalPanel.innerHTML = `
       <h2>${this.slots[standings[0]].name} vince la pappa!</h2>
       <ol>${rows}</ol>
-      <p><kbd>INVIO</kbd> rivincita · <kbd>ESC</kbd> menu</p>`;
+      <div class="hud-final-actions">
+        <button type="button" data-final="rematch">Rivincita <kbd class="kbd-only">INVIO</kbd></button>
+        <button type="button" data-final="menu">Menu <kbd class="kbd-only">ESC</kbd></button>
+      </div>`;
     this.finalPanel.hidden = false;
   }
 
