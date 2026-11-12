@@ -24,7 +24,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          # Stessa versione del PC di sviluppo: il package-lock è scritto da npm 11.
+          node-version: 24
           cache: npm
       - run: npm ci
       - run: npm test
