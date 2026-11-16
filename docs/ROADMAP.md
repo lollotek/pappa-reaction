@@ -203,7 +203,7 @@ public/
 - [x] `TouchButtons`: colore e nome del gatto, SCATTO rotondo e FINTA quadrata; feedback alla pressione **identico per scatto e finta**; pulsanti spenti da stordito e in panchina
 - [x] Pannelli dei punteggi, banner, menu e titolo compatti sugli schermi bassi (`max-height: 500px`), mai sotto i pulsanti
 - [x] Blocco dei gesti del browser: `touch-action: none` (i menu scorrono in verticale), `overscroll-behavior: none`, niente menu/lente al tocco lungo, niente evidenziazione al tocco
-- [x] Modalità touch automatica al primo tocco o con `pointer: coarse`; **Pulsanti touch: auto / sì / no** in Opzioni; in modalità touch al massimo 2 umani in Nuova partita (chi c'era da prima torna CPU)
+- [x] Modalità touch automatica al primo tocco (`pointerdown` col dito, o `touchstart` di riserva per i browser che segnalano il tocco come mouse) o con `pointer: coarse`; **Pulsanti touch: auto / sì / no** in Opzioni; in modalità touch al massimo 2 umani in Nuova partita (chi c'era da prima torna CPU)
 - [x] Audio sbloccato anche al rilascio del dito (`pointerup`): col tocco il browser concede l'audio solo lì
 - [x] `npm run dev:lan`: server di sviluppo raggiungibile dal telefono nella rete locale (HTTP; l'HTTPS serve per wake lock e service worker e arriva con M10)
 - [ ] Prova su un telefono Android: partita intera in 1 e in 2 giocatori, tempi coerenti con quelli da tastiera
@@ -230,7 +230,8 @@ public/
 - [x] Viewport `viewport-fit=cover`; pannelli dei punteggi, pulsante pausa e pulsanti touch dentro le aree sicure (`env(safe-area-inset-*)`). Il gioco occupa già tutto lo schermo con `position: fixed; inset: 0`, quindi `100dvh` non serve
 - [x] PWA: `manifest.webmanifest` (`display: fullscreen`, `orientation: landscape`, colori, icone 192/512/maskable), meta iOS e Android, icone PNG generate dalla favicon con `npm run icons` (`scripts/icons.mjs`, senza dipendenze)
 - [x] Service worker scritto a mano, generato a ogni build da un plugin in `vite.config.ts` (`src/platform/serviceWorker.ts`): pagina, codice, stili e font woff2 in cache subito, icone alla prima richiesta; pagina prima dalla rete, file con hash dalla cache; cache vecchie cancellate. Registrato solo nella build pubblicata e su https/localhost. Provato: con il server spento il gioco riparte dalla cache
-- [x] Invito a installare ("Condividi → Aggiungi alla schermata Home") sul titolo, solo dove lo schermo intero da browser non esiste (iPhone) e il gioco non è già installato
+- [x] Pulsante **Installa** sul titolo (se non già installato): dove il browser lo permette (`beforeinstallprompt`: Chrome, Edge, Samsung Internet) apre la finestra di installazione; altrimenti, sui dispositivi touch, mostra le istruzioni (iPhone: Safari → Condividi → Aggiungi alla schermata Home; altri: menu ⋮ → Installa app), con l'avviso di uscire dai browser dentro le app (WhatsApp, Instagram…)
+- [x] Riga di diagnosi in fondo alle Opzioni (browser e sistema, viewport, puntatore, tocchi, modalità touch, schermo intero, installazione), per gli screenshot dei playtester
 - [ ] Pubblicazione mobile su hosting proprio con https (GitHub Pages / Netlify): dentro l'iframe di itch.io non si installa la PWA e il wake lock può essere bloccato
 - [ ] Prova su dispositivi veri: installazione su Android e iPhone, schermo intero, rotazione bloccata, niente standby, offline
 - **Fatto quando**: installato su Android e iPhone parte a schermo intero, non ruota, non va in standby e funziona offline.

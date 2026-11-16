@@ -29,7 +29,8 @@ export type MenuItem =
       capture: (code: string) => string | null;
       color?: string;
     }
-  | { kind: 'info'; label: string };
+  /** `wide`: su tutta la larghezza anche nei menu a due colonne, e va a capo. */
+  | { kind: 'info'; label: string; wide?: boolean };
 
 export type MenuKey = 'up' | 'down' | 'left' | 'right' | 'enter' | 'back';
 

@@ -33,13 +33,30 @@ export function lockTypeFor(current: string | undefined): string {
     : 'landscape';
 }
 
-/** Suggerire "Aggiungi a Home"? Solo dove lo schermo intero da browser non esiste (iPhone). */
-export function shouldSuggestInstall(o: {
+/** Evento di Chrome/Edge/Samsung Internet che permette di proporre l'installazione. */
+interface BeforeInstallPromptEvent extends Event {
+  prompt(): Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
+
+/**
+ * Pulsante "Installa": `prompt` apre la finestra del browser (Android, desktop Chromium),
+ * `manual` mostra le istruzioni (iPhone, Firefox, browser dentro le app), null lo nasconde
+ * (già installato, o computer senza la finestra del browser).
+ */
+export function installMode(o: {
+  canPrompt: boolean;
   touch: boolean;
-  fullscreenApi: boolean;
   standalone: boolean;
-}): boolean {
-  return o.touch && !o.fullscreenApi && !o.standalone;
+}): 'prompt' | 'manual' | null {
+  if (o.standalone) return null;
+  if (o.canPrompt) return 'prompt';
+  return o.touch ? 'manual' : null;
+}
+
+/** iPhone o iPad (anche iPad che si presenta come Mac). */
+export function isIosDevice(ua: string, maxTouchPoints: number): boolean {
+  return /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && maxTouchPoints > 1);
 }
 
 export class Device {
@@ -47,11 +64,24 @@ export class Device {
   private wantAwake = false;
   private readonly doc = document as WebkitDocument;
   private readonly nav = navigator as WakeLockNavigator;
+  private installEvent: BeforeInstallPromptEvent | null = null;
 
   constructor(
     /** Il sistema (o l'utente) ha chiuso lo schermo intero. */
     onFullscreenExit: () => void,
+    /** È cambiata la possibilità di installare il gioco (pulsante "Installa"). */
+    onInstallChange: () => void = () => {},
   ) {
+    // Il browser propone l'installazione: si tiene l'evento per il pulsante "Installa".
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      this.installEvent = e as BeforeInstallPromptEvent;
+      onInstallChange();
+    });
+    window.addEventListener('appinstalled', () => {
+      this.installEvent = null;
+      onInstallChange();
+    });
     const onChange = () => {
       if (!this.isFullscreen) onFullscreenExit();
     };
@@ -76,6 +106,28 @@ export class Device {
   get standalone(): boolean {
     const mode = (m: string) => window.matchMedia?.(`(display-mode: ${m})`).matches ?? false;
     return mode('fullscreen') || mode('standalone') || this.nav.standalone === true;
+  }
+
+  /** Il browser può mostrare la sua finestra di installazione. */
+  get canPromptInstall(): boolean {
+    return this.installEvent !== null;
+  }
+
+  get isIos(): boolean {
+    return isIosDevice(navigator.userAgent, navigator.maxTouchPoints ?? 0);
+  }
+
+  /** Apre la finestra di installazione del browser (serve un gesto). L'evento vale una volta sola. */
+  async promptInstall(): Promise<boolean> {
+    const e = this.installEvent;
+    if (!e) return false;
+    this.installEvent = null;
+    try {
+      await e.prompt();
+      return (await e.userChoice).outcome === 'accepted';
+    } catch {
+      return false;
+    }
   }
 
   get wakeLockSupported(): boolean {

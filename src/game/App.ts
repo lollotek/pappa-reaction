@@ -16,7 +16,8 @@ import { MergedInput, TouchInput, type InputSource } from '../input/InputSource'
 import type { Keyboard } from '../input/Keyboard';
 import { touchLayout, type Insets } from '../input/touchLayout';
 import { BackButton } from '../platform/BackButton';
-import { Device, shouldSuggestInstall } from '../platform/Device';
+import { Device, installMode } from '../platform/Device';
+import { diagnosticsLine } from '../platform/diagnostics';
 import {
   MAX_TOUCH_HUMANS,
   TOUCH_PREFS,
@@ -90,6 +91,9 @@ export class App {
   private touchMode = false;
   private sawTouch = false;
   private readonly coarse = window.matchMedia?.('(pointer: coarse)');
+  private readonly fine = window.matchMedia?.('(pointer: fine)');
+  /** Menu del titolo aperto (da rifare quando cambia il pulsante "Installa"). */
+  private titleMenu: MenuModel | null = null;
   /** Stato dei comandi touch già applicato (per non rifare il DOM a ogni frame). */
   private touchUiKey = '';
   /** L'audio era già sbloccato prima di questo tocco (vedi indicatore audio). */
@@ -110,7 +114,10 @@ export class App {
     this.buttonTest = new ButtonTest(deps.container, this.touchButtons, () => this.showControls());
     this.backButton = new BackButton(() => this.handleBack());
     // Schermo intero chiuso (gesto Indietro, notifica…) durante la partita: pausa.
-    this.device = new Device(() => this.autoPauseTouch());
+    this.device = new Device(
+      () => this.autoPauseTouch(),
+      () => this.refreshTitle(),
+    );
     this.rotateHint = document.createElement('div');
     this.rotateHint.className = 'rotate-hint';
     this.rotateHint.innerHTML =
@@ -327,9 +334,62 @@ export class App {
         { kind: 'action', label: 'Regole', onSelect: () => this.showRules() },
         { kind: 'action', label: 'Comandi', onSelect: () => this.showControls() },
         { kind: 'action', label: 'Opzioni', onSelect: () => this.showOptions() },
+        ...this.installItems(),
       ]),
-      () => this.installHintHtml(),
+      '',
       'menu-title',
+    );
+    this.titleMenu = this.menu;
+  }
+
+  /** Rifà il menu del titolo se è aperto (es. il browser ora permette di installare). */
+  private refreshTitle(): void {
+    if (this.menu && this.menu === this.titleMenu) {
+      const selected = this.menu.selected;
+      this.showTitle();
+      if (this.menu.items[selected]) this.menu.selected = selected;
+      this.view.render();
+    }
+  }
+
+  /** Voce "Installa": finestra del browser dove c'è, altrimenti le istruzioni. */
+  private installItems(): MenuItem[] {
+    const mode = installMode({
+      canPrompt: this.device.canPromptInstall,
+      // Non solo `touchMode`: il pulsante non deve comparire sotto il dito al primo tocco.
+      touch: this.touchMode || this.coarse?.matches === true || navigator.maxTouchPoints > 0,
+      standalone: this.device.standalone,
+    });
+    if (!mode) return [];
+    return [
+      {
+        kind: 'action',
+        label: 'Installa',
+        onSelect: () => {
+          if (mode === 'prompt') {
+            void this.device.promptInstall().then(() => this.refreshTitle());
+          } else {
+            this.showInstallHelp();
+          }
+        },
+      },
+    ];
+  }
+
+  private showInstallHelp(): void {
+    const steps = this.device.isIos
+      ? '<p class="menu-text">In <b>Safari</b> tocca <b>Condividi</b> (il quadrato con la freccia), poi <b>Aggiungi alla schermata Home</b>. Apri Pappa dalla sua icona: su iPhone è l’unico modo per giocare a schermo intero.</p>' +
+        '<p class="menu-text">Se il link si è aperto dentro un’app (WhatsApp, Instagram…), aprilo prima in Safari.</p>'
+      : '<p class="menu-text">Apri il menu del browser (<b>⋮</b>) e scegli <b>Installa app</b> o <b>Aggiungi a schermata Home</b>, poi apri Pappa dalla sua icona.</p>' +
+        '<p class="menu-text">Se il link si è aperto dentro un’app (WhatsApp, Instagram…), aprilo prima in Chrome.</p>';
+    this.openMenu(
+      new MenuModel(
+        'Installa',
+        [{ kind: 'action', label: 'Indietro', onSelect: () => this.showTitle() }],
+        () => this.showTitle(),
+      ),
+      `<div class="menu-rules">${steps}</div>`,
+      'menu-wide',
     );
   }
 
@@ -522,6 +582,15 @@ export class App {
         label: 'Schermo intero: solo col touch; blocca la rotazione.',
       },
     ];
+    const diagnostics = () => this.diagnostics();
+    items.push({
+      kind: 'info',
+      wide: true,
+      // Ricalcolata a ogni disegno: cambia con "Pulsanti touch" e al primo tocco.
+      get label() {
+        return diagnostics();
+      },
+    });
     this.openMenu(new MenuModel('Opzioni', items, () => this.showTitle()));
   }
 
@@ -538,6 +607,23 @@ export class App {
   }
 
   // ---------------------------------------------------------------- supporto
+
+  /** Stato del dispositivo in una riga, per gli screenshot dei playtester. */
+  private diagnostics(): string {
+    return diagnosticsLine({
+      ua: navigator.userAgent,
+      pointer: this.coarse?.matches ? 'dito' : this.fine?.matches ? 'mouse' : 'nessuno',
+      maxTouchPoints: navigator.maxTouchPoints ?? 0,
+      sawTouch: this.sawTouch,
+      touchPref: this.settings.touch,
+      touchMode: this.touchMode,
+      fullscreenApi: this.device.fullscreenSupported,
+      standalone: this.device.standalone,
+      canPromptInstall: this.device.canPromptInstall,
+      width: window.innerWidth,
+      height: window.innerHeight,
+    });
+  }
 
   private openMenu(model: MenuModel, extra: string | (() => string) = '', variant = ''): void {
     this.keyTest.hide();
@@ -584,13 +670,16 @@ export class App {
       'pointerdown',
       (e) => {
         this.audioWasUnlocked = this.deps.audio.unlocked;
-        if (e.pointerType === 'touch' && !this.sawTouch) {
-          this.sawTouch = true;
-          this.updateTouchMode();
-        }
+        if (e.pointerType === 'touch') this.markTouch();
       },
       { capture: true },
     );
+    // Riserva: `touchstart` arriva solo da un dito vero, anche dove il browser
+    // segnala il tocco come mouse (es. "sito desktop" o WebView particolari).
+    window.addEventListener('touchstart', () => this.markTouch(), {
+      capture: true,
+      passive: true,
+    });
     this.coarse?.addEventListener?.('change', () => this.updateTouchMode());
     // Niente menu contestuale (tocco lungo) sul gioco.
     container.addEventListener('contextmenu', (e) => e.preventDefault());
@@ -608,6 +697,12 @@ export class App {
         this.deps.audio.toggleMute();
       }
     });
+  }
+
+  private markTouch(): void {
+    if (this.sawTouch) return;
+    this.sawTouch = true;
+    this.updateTouchMode();
   }
 
   /** Ricalcola la modalità touch (preferenza, primo tocco, tipo di puntatore). */
@@ -636,18 +731,6 @@ export class App {
     if (this.touchMode && this.mode === 'match' && this.session && !this.session.finished) {
       this.pause();
     }
-  }
-
-  /** Su iPhone lo schermo intero si ottiene solo installando il gioco sulla Home. */
-  private installHintHtml(): string {
-    const show = shouldSuggestInstall({
-      touch: this.touchMode,
-      fullscreenApi: this.device.fullscreenSupported,
-      standalone: this.device.standalone,
-    });
-    return show
-      ? '<p class="menu-text install-hint">Schermo intero: <b>Condividi → Aggiungi alla schermata Home</b>, poi apri il gioco da lì.</p>'
-      : '';
   }
 
   /** Mostra/nasconde pulsanti e pausa touch secondo la schermata; stati per frame. */

@@ -927,6 +927,12 @@ body.touch-mode .menu-arrow {
   .menu:not(.menu-title) .menu-label {
     white-space: nowrap;
   }
+  .menu:not(.menu-title) .menu-item.menu-span {
+    grid-column: 1 / -1;
+  }
+  .menu:not(.menu-title) .menu-span .menu-label {
+    white-space: normal;
+  }
   .menu:not(.menu-title) .menu-value {
     gap: 5px;
   }
@@ -1036,9 +1042,3 @@ body.touch-mode .menu-arrow {
   }
 }
 
-.install-hint {
-  margin-top: 8px;
-  font-size: 13px;
-  text-align: center;
-  opacity: 0.9;
-}

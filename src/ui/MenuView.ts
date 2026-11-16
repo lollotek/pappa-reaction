@@ -170,6 +170,7 @@ export class MenuView {
     const cls = ['menu-item', `menu-${item.kind}`];
     if (selected) cls.push('selected');
     if (item.kind === 'action' && item.accent) cls.push('accent');
+    if (item.kind === 'info' && item.wide) cls.push('menu-span');
     const color = 'color' in item && item.color ? ` style="--accent:${item.color}"` : '';
     const label = `<span class="menu-label">${escape(item.label)}</span>`;
     let value = '';
