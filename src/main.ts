@@ -1,5 +1,5 @@
-import '@fontsource/pixelify-sans/400.css';
-import '@fontsource/pixelify-sans/700.css';
+import '@fontsource/fredoka/400.css';
+import '@fontsource/fredoka/700.css';
 import './style.css';
 import { AudioEngine } from './audio/AudioEngine';
 import { playerSlots } from './config/controls';

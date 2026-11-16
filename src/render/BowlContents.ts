@@ -1,6 +1,9 @@
 import * as THREE from 'three';
 import { hash } from './generative/canvasTexture';
 
+/** La cacchetta è ingrandita rispetto al modello base per essere ben visibile. */
+const POOP_SCALE = 1.6;
+
 const mat = (color: string, emissive?: string) =>
   new THREE.MeshLambertMaterial({ color, flatShading: true, emissive: emissive ?? '#000' });
 
@@ -72,8 +75,11 @@ export function createBowlContents(): Map<string, THREE.Group> {
   shrimp.add(bodyArc, tail);
   map.set('gamberetto', shrimp);
 
-  // Cacchetta: torre di anelli marroni + mosche che ronzano.
+  // Cacchetta: torre di anelli marroni + mosche che ronzano. Più grande degli
+  // altri contenuti, così si riconosce al volo.
   const poop = new THREE.Group();
+  const pile = new THREE.Group();
+  pile.scale.setScalar(POOP_SCALE);
   const browns = ['#5a3b22', '#6b4729', '#4d311c'];
   for (let i = 0; i < 4; i++) {
     const ring = new THREE.Mesh(
@@ -82,16 +88,17 @@ export function createBowlContents(): Map<string, THREE.Group> {
     );
     ring.rotation.x = Math.PI / 2;
     ring.position.y = 0.12 + i * 0.15;
-    poop.add(ring);
+    pile.add(ring);
   }
   const tip = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.2, 5), mat('#5a3b22'));
   tip.position.y = 0.72;
   tip.rotation.z = 0.4;
-  poop.add(tip);
+  pile.add(tip);
+  poop.add(pile);
   const flies = new THREE.Group();
   flies.name = 'flies';
-  for (let i = 0; i < 3; i++) {
-    const fly = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.05, 0.07), mat('#151515'));
+  for (let i = 0; i < 4; i++) {
+    const fly = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.07, 0.1), mat('#151515'));
     flies.add(fly);
   }
   poop.add(flies);
@@ -108,9 +115,9 @@ export function animateContent(group: THREE.Group, id: string, time: number): vo
     flies?.children.forEach((fly, i) => {
       const a = s * (5 + i) + i * 2.1;
       fly.position.set(
-        Math.cos(a) * 0.5,
-        0.75 + Math.sin(s * 9 + i) * 0.15,
-        Math.sin(a * 1.3) * 0.5,
+        Math.cos(a) * 0.5 * POOP_SCALE,
+        (0.75 + Math.sin(s * 9 + i) * 0.15) * POOP_SCALE,
+        Math.sin(a * 1.3) * 0.5 * POOP_SCALE,
       );
     });
   } else if (id === 'gamberetto') {

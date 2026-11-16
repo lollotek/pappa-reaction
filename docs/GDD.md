@@ -144,14 +144,14 @@ Ogni slot non occupato da un umano è una CPU. La CPU usa le stesse regole e lo 
 
 | Parametro                           | Facile | Normale | Difficile |
 | ----------------------------------- | ------ | ------- | --------- |
-| Tempo di reazione medio             | 370 ms | 310 ms  | 275 ms    |
-| Variabilità (dev. std.)             | 80 ms  | 60 ms   | 45 ms     |
-| Abbocca alla finta del coperchio    | 30%    | 14%     | 7%        |
-| Abbocca alla finta di un avversario | 25%    | 12%     | 6%        |
-| Riconosce la cacchetta (non scatta) | 65%    | 85%     | 93%       |
+| Tempo di reazione medio             | 470 ms | 345 ms  | 295 ms    |
+| Variabilità (dev. std.)             | 90 ms  | 65 ms   | 48 ms     |
+| Abbocca alla finta del coperchio    | 35%    | 14%     | 7%        |
+| Abbocca alla finta di un avversario | 30%    | 12%     | 6%        |
+| Riconosce la cacchetta (non scatta) | 60%    | 85%     | 93%       |
 | Usa la finta di scatto (per round)  | 10%    | 30%     | 50%       |
 
-Valori tarati con `npm run balance` (400 partite simulate per riga) contro un "umano simulato" che reagisce in media in 290 ms (reazione + ritardo di tastiera e schermo) e ogni tanto cade nelle finte: l'umano vince il **78%** contro 3 CPU facili, il **37%** contro 3 normali, il **20%** contro 3 difficili (25% = alla pari). Da confermare con playtest veri.
+Valori tarati con `npm run balance` (400 partite simulate per riga) contro un "umano simulato" che reagisce in media in 290 ms (reazione + ritardo di tastiera e schermo) e ogni tanto cade nelle finte: l'umano vince il **99%** contro 3 CPU facili, il **65%** contro 3 normali, il **31%** contro 3 difficili (25% = alla pari). Con un umano più lento (370 ms, es. su touch) i valori scendono a 83% / 10% / 1%: Facile resta battibile da tutti. Valori alleggeriti dopo i primi playtest (Facile era troppo rapida).
 
 ## 9. Direzione artistica
 
@@ -161,7 +161,7 @@ Valori tarati con `npm run balance` (400 partite simulate per riga) contro un "u
 - **Resa pixel**: la scena viene renderizzata a bassa risoluzione (es. 480×270) e poi ingrandita a schermo intero senza sfocatura → effetto pixel uniforme anche sugli oggetti 3D.
 - **Palette**: limitata (32–48 colori), toni caldi e morbidi.
 - **Animazioni dei gatti** (low poly, animazione procedurale per parti — corpo, testa, zampe, coda): camminata, scatto, finta, presa della pappa, bonk/stordito, schifato (cacchetta), festa, triste.
-- **HUD**: font pixel (Pixelify Sans); punteggi ai 4 angoli in pannelli con badge a testa di gatto nel colore del giocatore; freccina pixel nel colore del giocatore sopra ogni gatto umano (nascosta mentre è stordito, quando ci sono le stelline); tempo di reazione in una nuvoletta sopra la freccina; banner centrale ("ROUND N", esito del round); classifica finale con coriandoli.
+- **HUD**: font arrotondato Fredoka (cifre ben distinguibili); punteggi ai 4 angoli in pannelli con badge a testa di gatto nel colore del giocatore; freccina pixel nel colore del giocatore sopra ogni gatto umano (nascosta mentre è stordito, quando ci sono le stelline); tempo di reazione in una nuvoletta sopra la freccina; banner centrale ("ROUND N", esito del round); classifica finale con coriandoli.
 - **Distinguere i gatti**: collare nel colore del giocatore; Priamo più nero, Mariù con riflessi bruni; Poh con macchia bianca sulla spalla, Tempesta sul posteriore e lista bianca sulla fronte.
 - **Riferimenti**: gli screenshot allegati sono solo riferimento di _ritmo e inquadratura_; grafica, ambientazione e personaggi sono originali.
 

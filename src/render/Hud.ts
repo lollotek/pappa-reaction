@@ -171,7 +171,7 @@ export class Hud {
     if (r.poopVictims.length > 0) {
       const who = joinNames(r.poopVictims.map(name));
       return r.poopSkipsNext
-        ? `Che schifo! ${who} salta il prossimo turno`
+        ? `Che schifo! ${who} ${r.poopVictims.length > 1 ? 'saltano' : 'salta'} il prossimo turno`
         : `Che schifo! ${who}: −1 punto`;
     }
     if (r.content.id === 'cacchetta') return 'Era una cacchetta! Nessuno ci è cascato';

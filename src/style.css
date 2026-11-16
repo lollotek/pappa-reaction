@@ -4,8 +4,8 @@ body {
   height: 100%;
   overflow: hidden;
   background: #1a1522;
-  font-family: 'Pixelify Sans', 'Trebuchet MS', sans-serif;
-  /* Il font pixel unisce "fi" in un solo glifo: "finta" si leggeva "Anta". */
+  font-family: 'Fredoka', 'Trebuchet MS', sans-serif;
+  /* Niente legature: "fi" unito in un glifo rende le parole meno leggibili. */
   font-variant-ligatures: none;
   font-feature-settings:
     'liga' 0,
@@ -132,7 +132,12 @@ body {
   font-size: clamp(22px, 4vw, 52px);
   font-weight: 700;
   color: #ffb347;
-  white-space: nowrap;
+  /* I testi lunghi (es. più vincitori) vanno a capo invece di uscire dallo schermo. */
+  width: max-content;
+  max-width: 90vw;
+  text-align: center;
+  line-height: 1.15;
+  overflow-wrap: break-word;
 }
 
 .hud-bubble {

@@ -53,24 +53,24 @@ export const tuning = {
   /** Profili CPU per difficoltà (vedi docs/GDD.md §8). Tempi in ms, probabilità 0..1. */
   cpu: {
     facile: {
-      reactionMeanMs: 370,
-      reactionSdMs: 80,
-      fooledByLid: 0.3,
-      fooledByFakeDash: 0.25,
-      recognizesPoop: 0.65,
+      reactionMeanMs: 470,
+      reactionSdMs: 90,
+      fooledByLid: 0.35,
+      fooledByFakeDash: 0.3,
+      recognizesPoop: 0.6,
       fakeDashChance: 0.1,
     },
     normale: {
-      reactionMeanMs: 310,
-      reactionSdMs: 60,
+      reactionMeanMs: 345,
+      reactionSdMs: 65,
       fooledByLid: 0.14,
       fooledByFakeDash: 0.12,
       recognizesPoop: 0.85,
       fakeDashChance: 0.3,
     },
     difficile: {
-      reactionMeanMs: 275,
-      reactionSdMs: 45,
+      reactionMeanMs: 295,
+      reactionSdMs: 48,
       fooledByLid: 0.07,
       fooledByFakeDash: 0.06,
       recognizesPoop: 0.93,
