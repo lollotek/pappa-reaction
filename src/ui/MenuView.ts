@@ -4,9 +4,14 @@ import type { MenuItem, MenuModel } from './MenuModel';
 const escape = (s: string) =>
   s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
 
+/** Ultimo modo con cui si è usato il menu: decide se mostrare la voce selezionata. */
+export type MenuInput = 'key' | 'mouse' | 'touch';
+
 /**
  * Disegna un MenuModel come pannello DOM. Mouse: passarci sopra seleziona,
  * clic attiva, clic sulle frecce ‹ › cambia valore. La tastiera la gestisce l'App.
+ * Col dito non c'è una voce "selezionata": tutte le voci sembrano pulsanti e
+ * si illuminano solo mentre il dito è appoggiato.
  */
 export class MenuView {
   readonly root: HTMLElement;
@@ -21,7 +26,13 @@ export class MenuView {
     this.root.hidden = true;
     container.appendChild(this.root);
 
-    this.root.addEventListener('mousemove', (e) => {
+    this.setInput('key');
+    // In cattura: il menu sa che si usa la tastiera prima che l'App la gestisca.
+    window.addEventListener('keydown', () => this.setInput('key'), { capture: true });
+
+    this.root.addEventListener('pointermove', (e) => {
+      if (e.pointerType !== 'mouse') return;
+      this.setInput('mouse');
       const li = (e.target as HTMLElement).closest<HTMLElement>('[data-index]');
       if (!li || !this.model || this.model.capturing) return;
       const i = Number(li.dataset.index);
@@ -43,11 +54,23 @@ export class MenuView {
         dir: target.closest<HTMLElement>('[data-dir]')?.dataset.dir,
       };
     };
+    let pressedEl: HTMLElement | null = null;
+    const release = () => {
+      pressedEl?.classList.remove('pressed');
+      pressedEl = null;
+    };
     this.root.addEventListener('pointerdown', (e) => {
       if (e.button !== 0) return;
+      this.setInput(e.pointerType === 'mouse' ? 'mouse' : 'touch');
       pressed = hit(e);
+      release();
+      const target = e.target as HTMLElement;
+      pressedEl =
+        target.closest<HTMLElement>('[data-dir]') ?? target.closest<HTMLElement>('[data-index]');
+      pressedEl?.classList.add('pressed');
     });
     this.root.addEventListener('pointerup', (e) => {
+      release();
       const down = pressed;
       pressed = null;
       const up = hit(e);
@@ -60,12 +83,24 @@ export class MenuView {
       this.render();
       this.onChange();
     });
-    this.root.addEventListener('pointerleave', () => (pressed = null));
+    this.root.addEventListener('pointerleave', () => {
+      pressed = null;
+      release();
+    });
+    this.root.addEventListener('pointercancel', () => {
+      pressed = null;
+      release();
+    });
+  }
+
+  setInput(input: MenuInput): void {
+    this.root.dataset.input = input;
   }
 
   /** `extra`: HTML aggiuntivo sotto il titolo (testo o funzione ricalcolata a ogni render). */
   show(model: MenuModel, extra: string | (() => string) = '', variant = ''): void {
     this.model = model;
+    model.spatial = (from, dir) => this.neighbor(from, dir);
     this.extra = typeof extra === 'string' ? () => extra : extra;
     this.root.className = variant ? `menu ${variant}` : 'menu';
     this.root.hidden = false;
@@ -78,6 +113,44 @@ export class MenuView {
   }
 
   private extra: () => string = () => '';
+
+  /** Voce selezionabile più vicina sullo schermo nella direzione data (menu su due colonne). */
+  private neighbor(from: number, dir: 'up' | 'down' | 'left' | 'right'): number | null {
+    const items = [...this.root.querySelectorAll<HTMLElement>('.menu-item[data-index]')]
+      .filter((el) => !el.classList.contains('menu-info'))
+      .map((el) => ({ i: Number(el.dataset.index), r: el.getBoundingClientRect() }));
+    const cur = items.find((it) => it.i === from)?.r;
+    if (!cur) return null;
+    const cx = (r: DOMRect) => r.left + r.width / 2;
+    const cy = (r: DOMRect) => r.top + r.height / 2;
+    let best: number | null = null;
+    let bestScore = Infinity;
+    for (const { i, r } of items) {
+      if (i === from) continue;
+      let ahead: boolean;
+      let main: number;
+      let cross: number;
+      if (dir === 'up' || dir === 'down') {
+        ahead = dir === 'down' ? r.top >= cur.bottom - 2 : r.bottom <= cur.top + 2;
+        main = Math.abs(cy(r) - cy(cur));
+        // Per una voce a tutta larghezza conta quanto si sovrappone, non il centro.
+        const overlap = Math.min(r.right, cur.right) - Math.max(r.left, cur.left);
+        cross = overlap > 0 ? 0 : Math.abs(cx(r) - cx(cur));
+      } else {
+        const sameRow = Math.min(r.bottom, cur.bottom) - Math.max(r.top, cur.top) > 0;
+        ahead = sameRow && (dir === 'right' ? cx(r) > cx(cur) : cx(r) < cx(cur));
+        main = Math.abs(cx(r) - cx(cur));
+        cross = 0;
+      }
+      if (!ahead) continue;
+      const score = main + cross * 4;
+      if (score < bestScore) {
+        bestScore = score;
+        best = i;
+      }
+    }
+    return best;
+  }
 
   render(): void {
     const m = this.model;

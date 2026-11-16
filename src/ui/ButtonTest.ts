@@ -1,3 +1,4 @@
+import { onTap } from './tap';
 import type { TouchButtons } from './TouchButtons';
 
 /**
@@ -19,8 +20,8 @@ export class ButtonTest {
     this.root.className = 'menu buttontest';
     this.root.hidden = true;
     container.appendChild(this.root);
-    this.root.addEventListener('click', (e) => {
-      if ((e.target as HTMLElement).closest('[data-back]')) this.onBack();
+    onTap(this.root, (tap) => {
+      if (tap === 'back' && this.active) this.onBack();
     });
   }
 
@@ -52,6 +53,6 @@ export class ButtonTest {
       <p class="menu-text">Toccate i pulsanti: si accendono finché il dito è appoggiato.
         Provate a toccarli tutti e quattro insieme.</p>
       <p class="menu-message">Dita sui pulsanti ora: ${now} · massimo insieme: ${this.best}</p>
-      <ul><li class="menu-item menu-action accent" data-back><span class="menu-label">Indietro</span></li></ul>`;
+      <ul><li class="menu-item menu-action " data-tap="back"><span class="menu-label">Indietro</span></li></ul>`;
   }
 }

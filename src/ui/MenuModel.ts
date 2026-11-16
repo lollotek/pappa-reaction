@@ -38,6 +38,12 @@ export class MenuModel {
   /** In attesa di un tasto da assegnare (voce `key`). */
   capturing = false;
   message = '';
+  /**
+   * Navigazione "a vista" (voci su più colonne): la voce vicina nella direzione
+   * data, o null se non ce n'è. Senza, le frecce seguono l'ordine della lista.
+   */
+  spatial: ((from: number, dir: 'up' | 'down' | 'left' | 'right') => number | null) | null =
+    null;
 
   constructor(
     readonly title: string,
@@ -64,12 +70,21 @@ export class MenuModel {
     const item = this.current;
     switch (key) {
       case 'up':
-        return this.move(-1);
-      case 'down':
-        return this.move(1);
+      case 'down': {
+        const dir = key === 'up' ? -1 : 1;
+        if (!this.spatial) return this.move(dir);
+        // Oltre il bordo si riparte dall'altra estremità della lista.
+        const i = this.spatial(this.selected, key) ?? this.edge(dir === 1 ? 'first' : 'last');
+        return this.goTo(i);
+      }
       case 'left':
-      case 'right':
-        return item ? this.adjust(item, key === 'left' ? -1 : 1) : false;
+      case 'right': {
+        if (item && (item.kind === 'choice' || item.kind === 'slider')) {
+          return this.adjust(item, key === 'left' ? -1 : 1);
+        }
+        const i = this.spatial?.(this.selected, key);
+        return i == null ? false : this.goTo(i);
+      }
       case 'enter':
         return item ? this.activate(item) : false;
       case 'back':
@@ -135,6 +150,19 @@ export class MenuModel {
       }
     }
     return false;
+  }
+
+  private goTo(i: number): boolean {
+    if (i === this.selected || !this.isSelectable(i)) return false;
+    this.selected = i;
+    this.message = '';
+    return true;
+  }
+
+  private edge(which: 'first' | 'last'): number {
+    const order = this.items.map((_, i) => i);
+    if (which === 'last') order.reverse();
+    return order.find((i) => this.isSelectable(i)) ?? this.selected;
   }
 
   private isSelectable(i: number): boolean {

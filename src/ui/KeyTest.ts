@@ -1,6 +1,7 @@
 import type { PlayerSlot } from '../config/controls';
 import { keyLabel } from '../config/keyLabel';
 import type { KeyPair } from '../config/settings';
+import { onTap } from './tap';
 
 /**
  * Prova tasti: ogni tasto dei gatti si illumina finché è premuto. Serve a
@@ -16,11 +17,15 @@ export class KeyTest {
   constructor(
     container: HTMLElement,
     private readonly slots: readonly PlayerSlot[],
+    private readonly onBack: () => void,
   ) {
     this.root = document.createElement('div');
     this.root.className = 'menu keytest';
     this.root.hidden = true;
     container.appendChild(this.root);
+    onTap(this.root, (tap) => {
+      if (tap === 'back' && this.active) this.onBack();
+    });
 
     window.addEventListener('keydown', (e) => {
       if (!this.active || e.code === 'Escape') return;
@@ -77,6 +82,6 @@ export class KeyTest {
         contemporaneamente.</p>
       <div class="keytest-grid">${rows}</div>
       <p class="menu-message">Tasti di gioco premuti ora: ${this.countGameKeys()} · massimo insieme: ${this.best}</p>
-      <p class="menu-help">ESC indietro</p>`;
+      <ul><li class="menu-item menu-action" data-tap="back"><span class="menu-label">Indietro</span> <kbd>ESC</kbd></li></ul>`;
   }
 }

@@ -99,7 +99,7 @@ export class App {
     this.settings = deps.settings;
     this.input = new MergedInput([deps.keyboard, this.touch]);
     this.view = new MenuView(deps.container, () => this.afterMenuChange());
-    this.keyTest = new KeyTest(deps.container, deps.slots);
+    this.keyTest = new KeyTest(deps.container, deps.slots, () => this.showControls());
     this.touchButtons = new TouchButtons(deps.container, deps.slots);
     this.touchButtons.onPress = (p, a, t) => {
       if (this.mode === 'match') this.touch.press(p, a, t);
@@ -507,19 +507,20 @@ export class App {
           else this.enterFullscreenIfWanted();
         },
       },
-      {
-        kind: 'info',
-        label: 'Arbitro furbo: alle finte del coperchio la musica fa un singhiozzo.',
-      },
-      {
-        kind: 'info',
-        label: 'Pulsanti touch "auto": compaiono al primo tocco sullo schermo.',
-      },
-      {
-        kind: 'info',
-        label: 'Schermo intero: solo con i pulsanti touch; blocca anche la rotazione.',
-      },
+      // Indietro prima delle note: su due colonne sta accanto a "Schermo intero".
       { kind: 'action', label: 'Indietro', onSelect: () => this.showTitle() },
+      {
+        kind: 'info',
+        label: 'Arbitro furbo: alle finte la musica fa un singhiozzo.',
+      },
+      {
+        kind: 'info',
+        label: 'Pulsanti touch "auto": compaiono al primo tocco.',
+      },
+      {
+        kind: 'info',
+        label: 'Schermo intero: solo col touch; blocca la rotazione.',
+      },
     ];
     this.openMenu(new MenuModel('Opzioni', items, () => this.showTitle()));
   }
@@ -531,7 +532,7 @@ export class App {
         [{ kind: 'action', label: 'Indietro', onSelect: () => this.showTitle() }],
         () => this.showTitle(),
       ),
-      () => RULES_HTML + (this.touchMode ? RULES_TOUCH_HTML : ''),
+      () => `<div class="menu-rules">${RULES_HTML}${this.touchMode ? RULES_TOUCH_HTML : ''}</div>`,
       'menu-wide',
     );
   }
@@ -615,6 +616,7 @@ export class App {
     if (on === this.touchMode) return;
     this.touchMode = on;
     document.body.classList.toggle('touch-mode', on);
+    this.view.setInput(on ? 'touch' : 'key');
     // Niente standby mentre si gioca col dito (il dispositivo non riceve tasti).
     this.device.keepAwake(on);
     if (on) {
@@ -734,14 +736,11 @@ const TOUCH_CONTROLS_HTML = `
 <p class="menu-text">Per cambiare i tasti della tastiera metti <b>Pulsanti touch: no</b> in Opzioni.</p>`;
 
 const RULES_TOUCH_HTML = `
-<div class="menu-rules">
   <p><b>Su telefono e tablet.</b> Tieni il dispositivo in orizzontale. Da soli: SCATTO a destra,
     FINTA a sinistra. In due: ognuno ha una colonna di pulsanti sul suo lato.
-    Per la pausa tieni premuto il pulsante in alto al centro.</p>
-</div>`;
+    Per la pausa tieni premuto il pulsante in alto al centro.</p>`;
 
 const RULES_HTML = `
-<div class="menu-rules">
   <p><b>Lo scopo.</b> I gatti girano attorno alla ciotola. Quando la mano alza il coperchio
     e la musica si ferma, premi <b>SCATTO</b>: il più veloce prende la pappa.</p>
   <p><b>La pappa.</b> Crocchette 1 punto, tonno 2, salmone 3, gamberetto d'oro 5.
@@ -753,8 +752,7 @@ const RULES_HTML = `
   <p><b>La cacchetta.</b> Se sotto il coperchio c'è la cacchetta, <b>non scattare</b>:
     chi scatta salta il round dopo (all'ultimo round perde 1 punto).</p>
   <p><b>La partita.</b> Vince chi ha più punti dopo l'ultimo round. In caso di parità
-    si va allo spareggio tra i primi.</p>
-</div>`;
+    si va allo spareggio tra i primi.</p>`;
 
 /** Aree sicure dello schermo (notch, angoli arrotondati) lette dal CSS. */
 function safeInsets(): Insets {

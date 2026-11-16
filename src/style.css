@@ -326,6 +326,7 @@ body {
   transform: translate(-50%, -50%);
   width: min(460px, calc(100vw - 32px));
   max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 16px - var(--sat) - var(--sab));
   overflow-y: auto;
   padding: 18px 24px 14px;
   border: 4px solid #000;
@@ -364,31 +365,69 @@ body {
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  margin: 3px 0;
+  margin: 4px 0;
   padding: 6px 12px;
-  border: 3px solid transparent;
-  border-left: 8px solid var(--accent, transparent);
+  /* Ogni voce ha l'aspetto di un pulsante, anche senza mouse sopra (telefono). */
+  border: 3px solid rgb(255 255 255 / 0.22);
+  border-left: 8px solid var(--accent, rgb(255 255 255 / 0.22));
   border-radius: 10px;
+  background: rgb(255 255 255 / 0.08);
+  box-shadow: inset 0 -3px 0 rgb(0 0 0 / 0.3);
   font-size: 20px;
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
-.menu-item.selected {
+/* Le azioni (Gioca, Indietro…) sono pulsanti centrati. */
+.menu-action {
+  justify-content: center;
+}
+/* Azione principale: pulsante arancione pieno, come quelli di fine partita. */
+.menu-action.accent {
+  border-color: #000;
+  background: #ffb347;
+  color: #000;
+  font-weight: 700;
+  text-shadow: none;
+}
+/* Voce selezionata: solo per tastiera e mouse (col dito non c'è un "cursore"). */
+.menu:not([data-input='touch']) .menu-item.selected {
   border-color: #ffe066;
   border-left-color: var(--accent, #ffe066);
-  background: rgb(255 224 102 / 0.14);
+  background: rgb(255 224 102 / 0.2);
 }
-.menu-item.selected .menu-label::before {
+.menu:not([data-input='touch']) .menu-action.accent.selected {
+  border-color: #fff;
+  background: #ffc76e;
+  box-shadow:
+    inset 0 -3px 0 rgb(0 0 0 / 0.3),
+    0 0 0 3px #000;
+}
+.menu[data-input='key'] .menu-item.selected .menu-label::before {
   content: '▸ ';
   color: #ffe066;
 }
-.menu-action.accent .menu-label {
-  color: #ffe066;
+.menu[data-input='key'] .menu-action.accent.selected .menu-label::before {
+  color: #000;
+}
+/* Pressione (dito o mouse): la voce si "abbassa". */
+.menu-item.pressed,
+.menu-item:active {
+  transform: translateY(2px);
+  box-shadow: none;
+  background: rgb(255 224 102 / 0.32);
+}
+.menu-action.accent.pressed,
+.menu-action.accent:active {
+  background: #ffd08a;
 }
 .menu-title .menu-item {
-  justify-content: center;
   font-size: 24px;
 }
 .menu-info {
+  border: 0;
+  background: none;
+  box-shadow: none;
   cursor: default;
   font-size: 14px;
   opacity: 0.75;
@@ -399,12 +438,22 @@ body {
   gap: 8px;
   color: #ffe066;
 }
+/* Frecce ‹ ›: piccoli pulsanti, si vede che si toccano. */
 .menu-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.3em;
   padding: 0 4px;
-  opacity: 0.6;
+  border: 2px solid rgb(255 224 102 / 0.6);
+  border-radius: 7px;
+  background: rgb(0 0 0 / 0.3);
+  line-height: 1.15;
 }
-.menu-item.selected .menu-arrow {
-  opacity: 1;
+.menu-arrow.pressed {
+  background: #ffe066;
+  color: #000;
+  text-shadow: none;
 }
 .menu-bar {
   letter-spacing: -1px;
@@ -464,6 +513,11 @@ body {
 .menu-keys span {
   padding-left: 6px;
   border-left: 5px solid var(--accent);
+}
+
+.menu.buttontest {
+  /* Stretto: ai lati ci sono i pulsanti da provare. */
+  width: min(420px, 56vw);
 }
 
 .keytest-grid {
@@ -745,12 +799,13 @@ body.touch-mode .hud-banner {
 }
 
 /* Voci di menu comode per il dito. */
-body.touch-mode .menu-item {
+body.touch-mode .menu-item:not(.menu-info) {
   min-height: 44px;
   box-sizing: border-box;
 }
 body.touch-mode .menu-arrow {
-  padding: 6px 12px;
+  min-width: 36px;
+  min-height: 32px;
 }
 
 /* Schermi bassi (telefono in orizzontale): HUD compatto. */
@@ -822,16 +877,109 @@ body.touch-mode .menu-arrow {
     font-size: 20px;
   }
   .menu {
-    padding: 10px 16px 8px;
+    padding: 8px 14px 6px;
   }
   .menu h2 {
-    margin-bottom: 6px;
+    margin-bottom: 4px;
     font-size: 22px;
   }
   .menu-item {
-    margin: 1px 0;
+    margin: 3px 0;
     padding: 3px 10px;
     font-size: 17px;
+  }
+  .menu-text,
+  .menu-keys {
+    margin-bottom: 6px;
+    font-size: 14px;
+    line-height: 1.25;
+  }
+  .menu-message {
+    margin-top: 4px;
+  }
+  .menu-message:empty {
+    min-height: 0;
+    margin: 0;
+  }
+  .menu-rules p {
+    margin-bottom: 6px;
+    font-size: 13px;
+    line-height: 1.25;
+  }
+}
+
+/*
+ * Schermi bassi ma larghi (telefono in orizzontale, finestra bassa): voci su due
+ * colonne e regole su più colonne, così nessuna schermata ha bisogno dello scroll.
+ */
+@media (max-height: 720px) and (min-width: 560px) {
+  .menu:not(.menu-title, .buttontest) {
+    width: min(720px, calc(100vw - 32px - var(--sal) - var(--sar)));
+  }
+  .menu:not(.menu-title) ul {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 8px;
+  }
+  .menu:not(.menu-title) .menu-item:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+  .menu:not(.menu-title) .menu-label {
+    white-space: nowrap;
+  }
+  .menu:not(.menu-title) .menu-value {
+    gap: 5px;
+  }
+  .menu:not(.menu-title) .menu-bar {
+    font-size: 10px;
+  }
+  .menu-info {
+    min-height: 0;
+    margin: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+  .menu-rules {
+    columns: 3;
+    column-gap: 18px;
+  }
+  .menu-rules p {
+    break-inside: avoid;
+  }
+}
+
+/* Schermi bassissimi (telefono in orizzontale con la barra del browser). */
+@media (max-height: 380px) {
+  .menu {
+    max-height: calc(100dvh - 8px - var(--sat) - var(--sab));
+    padding: 6px 12px 4px;
+    border-width: 3px;
+  }
+  .menu h2 {
+    margin-bottom: 2px;
+    font-size: 19px;
+  }
+  .menu-item {
+    margin: 2px 0;
+    font-size: 16px;
+  }
+  body.touch-mode .menu-item:not(.menu-info) {
+    min-height: 38px;
+  }
+  .menu-info {
+    line-height: 1.2;
+  }
+  .menu-info {
+    font-size: 12px;
+  }
+  .menu-text,
+  .menu-keys {
+    font-size: 13px;
+  }
+  .menu-rules p {
+    margin-bottom: 4px;
+    font-size: 12px;
+    line-height: 1.2;
   }
 }
 
