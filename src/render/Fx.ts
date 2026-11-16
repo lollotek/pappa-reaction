@@ -11,6 +11,10 @@ interface Particle {
   spin: number;
 }
 
+/** Colori della polvere: sul tappeto (crema) e sulla terra battuta (marrone). */
+export const DUST_RUG = ['#efe0bd', '#d9c7a0'] as const;
+export const DUST_DIRT = ['#b48a5c', '#8f6a44'] as const;
+
 const CONFETTI = ['#e2574c', '#f2c94c', '#5f8a8b', '#8a6fa8', '#7d9a6a', '#f4efe4'];
 
 /** Particelle semplici (quadratini billboard): polvere e coriandoli. */
@@ -20,16 +24,32 @@ export class Fx {
   private readonly quad = new THREE.PlaneGeometry(1, 1);
 
   /** Sbuffi di polvere ai piedi di un gatto che scatta o frena. */
-  dust(at: THREE.Vector3, count = 6): void {
+  dust(at: THREE.Vector3, count = 6, colors: readonly [string, string] = DUST_RUG): void {
     for (let i = 0; i < count; i++) {
       const a = Math.random() * Math.PI * 2;
       this.spawn({
-        color: i % 2 ? '#efe0bd' : '#d9c7a0',
+        color: colors[i % 2],
         size: 0.18 + Math.random() * 0.14,
         pos: at.clone().add(new THREE.Vector3(Math.cos(a) * 0.3, 0.1, Math.sin(a) * 0.3)),
         vel: new THREE.Vector3(Math.cos(a) * 0.8, 0.9 + Math.random() * 0.6, Math.sin(a) * 0.8),
         life: 450 + Math.random() * 250,
         gravity: -0.5,
+        fade: true,
+      });
+    }
+  }
+
+  /** Spruzzi d'acqua attorno a un gatto che nuota (mappa balcone). */
+  splash(at: THREE.Vector3, waterY: number, count = 6): void {
+    for (let i = 0; i < count; i++) {
+      const a = Math.random() * Math.PI * 2;
+      this.spawn({
+        color: i % 3 === 0 ? '#ffffff' : i % 2 ? '#bfeaf8' : '#7fd0ec',
+        size: 0.14 + Math.random() * 0.12,
+        pos: new THREE.Vector3(at.x + Math.cos(a) * 0.35, waterY + 0.05, at.z + Math.sin(a) * 0.35),
+        vel: new THREE.Vector3(Math.cos(a) * 1.1, 1.6 + Math.random() * 0.9, Math.sin(a) * 1.1),
+        life: 420 + Math.random() * 200,
+        gravity: -6,
         fade: true,
       });
     }

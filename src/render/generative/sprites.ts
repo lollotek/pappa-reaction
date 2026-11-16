@@ -183,3 +183,36 @@ export function playerArrow(color: string): Sprite {
     );
   });
 }
+
+/** Cespuglio tondo con bacche. */
+export function bush(): Sprite {
+  return sprite(30, 22, (p) => {
+    p.ellipse(15, 13, 14.5, 9, '#244a2a');
+    p.ellipse(15, 13, 13.5, 8, '#3f7a3a');
+    p.ellipse(9, 10, 6, 4, '#4f9a4a');
+    p.ellipse(20, 9, 6, 4, '#559a48');
+    p.ellipse(13, 7, 4, 3, '#67b35a');
+    for (const [x, y] of [
+      [7, 13],
+      [18, 15],
+      [23, 11],
+      [12, 16],
+    ]) {
+      p.rect(x, y, 2, 2, '#d8433f');
+      p.dot(x, y, '#f08a7a');
+    }
+  });
+}
+
+/** Girasole alto. */
+export function sunflower(): Sprite {
+  return sprite(16, 40, (p) => {
+    p.rect(7, 12, 2, 28, '#3f7d3a');
+    p.rect(3, 22, 4, 3, '#5aa04f');
+    p.rect(9, 28, 4, 3, '#5aa04f');
+    p.ellipse(8, 7, 7, 7, '#c98a1c');
+    p.ellipse(8, 7, 6, 6, '#f2c94c');
+    p.ellipse(8, 7, 3, 3, '#6b4423');
+    p.dot(7, 6, '#8a5a30');
+  });
+}

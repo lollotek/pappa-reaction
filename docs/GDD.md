@@ -39,6 +39,9 @@ Le statistiche dei gatti sono **identiche** (solo estetica), per mantenere il gi
 - **Struttura centrale**: una ciotola/piatto grande coperto da un **coperchio di legno** (a cupola).
 - **La mano arbitro**: scende dall'alto, afferra il pomello del coperchio e lo solleva. È il "telegrafo" di tutte le azioni del round (finte comprese). Al reveal la mano strappa il coperchio verso l'alto, fuori dall'inquadratura, così nessun gatto resta nascosto; a fine round lo riabbassa.
 - **Ambientazione**: salotto di casa — parquet, parete con finestra e quadretti, libreria, tiragraffi, piante; la pista è un tappeto rotondo intrecciato (fascia chiara).
+- **Seconda mappa — balcone**: pavimento in cotto color mattone, facciata con persiane, ringhiere e vasi; i gatti nuotano in una piscinetta gonfiabile (con paperella) invece di correre sul tappeto. 
+- **Terza mappa — giardino**: prato con siepe, steccato, girasoli e cespugli; i gatti corrono su uno spiazzo di terra battuta (pista più scura con impronte, polvere marrone).
+- A ogni nuova partita la mappa è scelta a caso, diversa dalla precedente (`?mappa=salotto|balcone|giardino` la forza per i test).
 
 ## 5. Flusso di una partita
 

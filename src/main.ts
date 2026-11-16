@@ -9,6 +9,7 @@ import { tuning } from './config/tuning';
 import { App } from './game/App';
 import { Keyboard } from './input/Keyboard';
 import { PixelRenderer } from './render/PixelRenderer';
+import { ARENA_MAPS, type ArenaMap } from './render/Arena';
 import { MatchScene } from './scenes/MatchScene';
 import { Showroom } from './scenes/Showroom';
 
@@ -49,7 +50,10 @@ function startShowroom(root: HTMLElement): void {
 function startGame(root: HTMLElement): void {
   const store = safeStorage();
   const settings = loadSettings(store, playerSlots);
-  const scene = new MatchScene(playerSlots);
+  // Mappa a caso a ogni partita; `?mappa=balcone` (salotto, giardino) la forza per i test.
+  const mapParam = params.get('mappa');
+  const map = ARENA_MAPS.find((id): id is ArenaMap => id === mapParam);
+  const scene = new MatchScene(playerSlots, map);
   pixel.attachCamera(scene.camera);
   const audio = new AudioEngine();
   const keyboard = new Keyboard(settings.keys);

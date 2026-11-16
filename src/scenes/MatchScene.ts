@@ -1,9 +1,9 @@
 import * as THREE from 'three';
 import type { PlayerSlot } from '../config/controls';
 import type { MatchMachine, RoundEvent } from '../core/MatchMachine';
-import { Arena } from '../render/Arena';
+import { ARENA_MAPS, Arena, WATER_Y, type ArenaMap } from '../render/Arena';
 import { CatModel, type CatPose } from '../render/CatModel';
-import { Fx } from '../render/Fx';
+import { DUST_DIRT, DUST_RUG, Fx } from '../render/Fx';
 import { playerArrow, SPRITE_PX_PER_UNIT } from '../render/generative/sprites';
 
 const TRACK_RADIUS = 3.4;
@@ -27,6 +27,22 @@ const EAT_MS = 1000;
 const ARROW_Y = 1.95;
 const ARROW_SCALE = 1;
 const ARROW_BOB = 0.07;
+/** Balcone: quanto affonda il gatto che nuota in pista e quanto vicino alla ciotola. */
+const SWIM_SINK = 0.34;
+const WADE_SINK = 0.12;
+const SWIM_BOB = 0.035;
+/** Sfondo oltre la parete: interno scuro per il salotto, cielo all'aperto. */
+const SKY: Record<ArenaMap, string> = {
+  salotto: '#2b2236',
+  balcone: '#8cc6ea',
+  giardino: '#8cc6ea',
+};
+/** Balcone: il terzo classificato non deve finire sul bordo gonfiabile. */
+const POOL_FINAL_SPOTS: [number, number][] = [
+  [-2.6, 2.4],
+  [2.6, 2.4],
+  [-3.4, 0.4],
+];
 
 const flat = (color: string) => new THREE.MeshLambertMaterial({ color, flatShading: true });
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
@@ -44,6 +60,8 @@ interface RunnerVisual {
   stink: THREE.Group;
   /** Freccina che indica il gatto di un giocatore umano. */
   arrow: THREE.Sprite;
+  /** Cerchio di increspature attorno al gatto che nuota (solo balcone). */
+  wake: THREE.Mesh;
   dashAt: number | null;
   fakeAt: number | null;
   falseStartAt: number | null;
@@ -60,7 +78,12 @@ interface RunnerVisual {
 export class MatchScene {
   readonly scene = new THREE.Scene();
   readonly camera = new THREE.PerspectiveCamera(32, 16 / 9, 0.1, 100);
-  readonly arena = new Arena();
+  /** Arena della partita in corso; cambia a ogni nuova partita. */
+  arena: Arena;
+  /** Arene già costruite, riusate quando la mappa torna. */
+  private readonly arenas = new Map<ArenaMap, Arena>();
+  /** Mappa forzata (`?mappa=`); altrimenti una a caso a ogni partita. */
+  private readonly forcedMap: ArenaMap | undefined;
   private readonly fx = new Fx();
 
   private readonly runners: RunnerVisual[] = [];
@@ -78,12 +101,16 @@ export class MatchScene {
   private lidClosingAt: number | null = null;
   private fakeLid: { at: number; durationMs: number } | null = null;
 
-  constructor(slots: readonly PlayerSlot[]) {
-    this.scene.background = new THREE.Color('#2b2236');
+  /** `map` assente: mappa scelta a caso a ogni nuova partita. */
+  constructor(slots: readonly PlayerSlot[], map?: ArenaMap) {
+    this.forcedMap = map;
+    this.arena = this.arenaFor(map ?? 'salotto');
+    this.scene.background = new THREE.Color();
     this.scene.add(new THREE.HemisphereLight('#fff4dc', '#5a4a52', 1.5));
     const sun = new THREE.DirectionalLight('#fff0d8', 1.5);
     sun.position.set(3, 10, 7);
-    this.scene.add(sun, this.arena.group, this.fx.group);
+    this.scene.add(sun, this.fx.group);
+    this.useArena(this.forcedMap ?? this.randomMap());
 
     slots.forEach((slot) => this.runners.push(this.createRunner(slot)));
     this.fitCamera();
@@ -117,21 +144,21 @@ export class MatchScene {
         this.shake(e.t + 180, 0.14, 260); // bonk contro il coperchio
         this.runners[e.player].falseStartAt = e.t;
         this.runners[e.player].stunnedUntil = e.stunnedUntil;
-        this.fx.dust(this.runners[e.player].cat.root.position, 4);
+        this.puff(this.runners[e.player].cat.root.position, 4);
         break;
       case 'dash':
         this.runners[e.player].dashAt = e.t;
-        this.fx.dust(this.runners[e.player].cat.root.position);
+        this.puff(this.runners[e.player].cat.root.position);
         break;
       case 'poop':
         this.runners[e.player].dashAt = e.t;
         this.runners[e.player].poopAt = e.t;
         this.runners[e.player].stinky = true;
-        this.fx.dust(this.runners[e.player].cat.root.position);
+        this.puff(this.runners[e.player].cat.root.position);
         break;
       case 'fakeDash':
         this.runners[e.player].fakeAt = e.t;
-        this.fx.dust(this.runners[e.player].cat.root.position, 3);
+        this.puff(this.runners[e.player].cat.root.position, 3);
         break;
       case 'fakeLid':
         this.fakeLid = { at: e.t, durationMs: e.durationMs };
@@ -153,6 +180,7 @@ export class MatchScene {
 
   /** Nuova partita: toglie nuvolette e coriandoli rimasti. */
   reset(): void {
+    this.useArena(this.forcedMap ?? this.randomMap());
     for (const r of this.runners) r.stinky = false;
     this.fx.clear();
     this.shakes = [];
@@ -184,9 +212,39 @@ export class MatchScene {
     });
 
     this.updateLidAndContent(now, m);
+    this.arena.animate(now);
     this.arena.faceCamera(this.camera);
     this.fx.update(dt, this.camera);
     this.updateCamera(now, m);
+  }
+
+  /** Mappa a caso, diversa da quella attuale quando possibile. */
+  private randomMap(): ArenaMap {
+    const others = ARENA_MAPS.filter((id) => id !== this.arena.map);
+    return others[Math.floor(Math.random() * others.length)] ?? this.arena.map;
+  }
+
+  private arenaFor(map: ArenaMap): Arena {
+    let arena = this.arenas.get(map);
+    if (!arena) {
+      arena = new Arena(map);
+      this.arenas.set(map, arena);
+    }
+    return arena;
+  }
+
+  /** Mette in scena l'arena della mappa scelta (e il suo cielo). */
+  private useArena(map: ArenaMap): void {
+    this.scene.remove(this.arena.group);
+    this.arena = this.arenaFor(map);
+    this.scene.add(this.arena.group);
+    (this.scene.background as THREE.Color).set(SKY[map]);
+  }
+
+  /** Polvere sul tappeto o sulla terra, spruzzi nella piscinetta. */
+  private puff(at: THREE.Vector3, count?: number): void {
+    if (this.arena.swimming) this.fx.splash(at, WATER_Y, count);
+    else this.fx.dust(at, count, this.arena.map === 'giardino' ? DUST_DIRT : DUST_RUG);
   }
 
   private shake(at: number, power: number, ms: number): void {
@@ -296,12 +354,32 @@ export class MatchScene {
       pose = 'stunned';
     }
 
-    r.cat.root.position.set(Math.cos(a) * radius, hop, Math.sin(a) * radius);
+    let y = hop;
+    if (this.arena.swimming) {
+      // Nuota: affonda in pista e "tocca il fondo" avvicinandosi alla ciotola.
+      const deep = clamp01((radius - BOWL_RADIUS) / (TRACK_RADIUS - BOWL_RADIUS));
+      const bob = Math.sin(now * 0.006 + i * 1.7) * SWIM_BOB;
+      y += -THREE.MathUtils.lerp(WADE_SINK, SWIM_SINK, deep) + bob * deep;
+    }
+    r.cat.root.position.set(Math.cos(a) * radius, y, Math.sin(a) * radius);
     r.cat.root.rotation.y = facing;
     r.cat.pose(pose, now, poseU);
+    this.placeWake(r, i, now, pose === 'run' || pose === 'dash');
+  }
+
+  /** Increspature attorno al gatto che nuota; più ampie mentre si muove. */
+  private placeWake(r: RunnerVisual, i: number, now: number, moving: boolean): void {
+    r.wake.visible = this.arena.swimming;
+    if (!r.wake.visible) return;
+    const p = r.cat.root.position;
+    r.wake.position.set(p.x, WATER_Y + 0.01, p.z);
+    const pulse = (now * (moving ? 0.0025 : 0.0012) + i * 0.25) % 1;
+    r.wake.scale.setScalar(0.8 + pulse * (moving ? 0.7 : 0.4));
+    (r.wake.material as THREE.MeshBasicMaterial).opacity = 0.7 * (1 - pulse);
   }
 
   private placeOnBench(r: RunnerVisual, i: number, now: number): void {
+    r.wake.visible = false;
     // Seduto fuori dal tappeto, davanti al proprio angolo, a guardare gli altri.
     const a = Math.PI / 4 + (i * Math.PI) / 2;
     r.cat.root.position.set(Math.cos(a) * BENCH_RADIUS, 0, Math.sin(a) * BENCH_RADIUS);
@@ -311,6 +389,7 @@ export class MatchScene {
 
   private placeFinal(r: RunnerVisual, i: number, now: number, m: MatchMachine): void {
     const rank = m.standings?.indexOf(i) ?? 3;
+    r.wake.visible = false;
     if (rank === 0) {
       // Il vincitore festeggia davanti alla ciotola, rivolto alla camera.
       r.cat.root.position.set(0, Math.abs(Math.sin(now * 0.008)) * 0.45, 3.3);
@@ -319,11 +398,13 @@ export class MatchScene {
       return;
     }
     // Gli altri ai lati del vincitore, rivolti verso di lui: 2° seduto, poi tristi.
-    const spots: [number, number][] = [
-      [-2.6, 2.4],
-      [2.6, 2.4],
-      [-4.2, 0.6],
-    ];
+    const spots: [number, number][] = this.arena.swimming
+      ? POOL_FINAL_SPOTS
+      : [
+          [-2.6, 2.4],
+          [2.6, 2.4],
+          [-4.2, 0.6],
+        ];
     const [x, z] = spots[Math.max(0, rank - 1)] ?? spots[2];
     r.cat.root.position.set(x, 0, z);
     r.cat.root.rotation.y = Math.atan2(0 - x, 3.3 - z);
@@ -427,14 +508,24 @@ export class MatchScene {
     arrow.visible = false;
     arrow.userData.marked = false;
 
+    // Increspature sull'acqua (balcone).
+    const wake = new THREE.Mesh(
+      new THREE.RingGeometry(0.55, 0.68, 16),
+      new THREE.MeshBasicMaterial({ color: '#e9f8fd', transparent: true, depthWrite: false }),
+    );
+    wake.rotation.x = -Math.PI / 2;
+    wake.renderOrder = 2;
+    wake.visible = false;
+
     cat.root.scale.setScalar(CAT_SCALE);
     cat.root.add(stars, stink);
-    this.scene.add(cat.root, arrow);
+    this.scene.add(cat.root, arrow, wake);
     return {
       cat,
       stars,
       stink,
       arrow,
+      wake,
       dashAt: null,
       fakeAt: null,
       falseStartAt: null,
