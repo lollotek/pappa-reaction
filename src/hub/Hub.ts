@@ -5,14 +5,15 @@ import { Gamepads } from '../input/Gamepads';
 import { openGame } from '../platform/navigation';
 import { gamePath } from '../platform/routes';
 import type { PixelRenderer } from '../render/PixelRenderer';
+import { onTap } from '../ui/tap';
 import { HubScene } from './HubScene';
 
 /** Tempo dell'animazione di apertura prima di passare alla pagina del gioco. */
 const OPEN_DELAY_MS = 480;
 
 /**
- * Hub di Priamo Stadium: schede dei minigiochi in 3D. Frecce o tocco per
- * scegliere, INVIO o tocco per giocare.
+ * Hub di Priamo Stadium: un oggetto 3D per minigioco. Frecce o tocco per
+ * scegliere, "Avvia" (o INVIO) per giocare.
  */
 export class Hub {
   private readonly scene3d = new HubScene(GAMES, playerSlots);
@@ -37,21 +38,22 @@ export class Hub {
     this.logo = el('div', 'hub-logo', '<h1>Priamo Stadium</h1><p>Scegli un gioco</p>');
     this.info = el('div', 'hub-info');
     this.fade = el('div', 'hub-fade');
-    root.append(this.logo, this.info, this.fade);
+    const play = el('div', 'hub-play');
+    play.innerHTML = '<button type="button" data-tap="play">Avvia</button>';
+    root.append(this.logo, this.info, play, this.fade);
+    onTap(play, () => this.activate());
 
     window.addEventListener('keydown', (e) => this.onKey(e));
     const canvas = pixel.renderer.domElement;
-    canvas.addEventListener('pointermove', (e) => {
-      if (e.pointerType !== 'mouse' || this.opening) return;
+    // Il tocco (o il clic) sceglie soltanto: per giocare c'è "Avvia".
+    canvas.addEventListener('pointerup', (e) => {
+      if (e.pointerType !== 'mouse') {
+        this.sawTouch = true;
+        this.renderInfo();
+      }
+      if (this.opening) return;
       const i = this.pick(e);
       if (i !== null) this.select(i);
-    });
-    canvas.addEventListener('pointerup', (e) => {
-      if (e.pointerType !== 'mouse') this.sawTouch = true;
-      const i = this.pick(e);
-      if (i === null) return;
-      this.select(i);
-      this.activate();
     });
     root.addEventListener('contextmenu', (e) => e.preventDefault());
     // Tornati all'hub con l'Indietro: la pagina può riprendere da dove era (cache del browser).
@@ -69,7 +71,7 @@ export class Hub {
       this.pixel.render(this.scene3d.scene, this.scene3d.camera);
       if (this.debug?.visible()) {
         const l = this.pixel.layout;
-        this.debug.el.textContent = `hub · ${l.width}×${l.height} ×${l.scale} · scheda ${this.scene3d.selected}`;
+        this.debug.el.textContent = `hub · ${l.width}×${l.height} ×${l.scale} · gioco ${this.scene3d.selected}`;
       }
       requestAnimationFrame(loop);
     };
@@ -158,7 +160,7 @@ export class Hub {
   private renderInfo(): void {
     const game = GAMES[this.scene3d.selected];
     const touch = this.sawTouch || window.matchMedia?.('(pointer: coarse)').matches;
-    const hint = touch ? 'Tocca una scheda per giocare' : '← → scegli · INVIO gioca';
+    const hint = touch ? 'Tocca un gioco per sceglierlo' : '← → scegli · INVIO avvia';
     this.info.style.setProperty('--accent', game.colors.ink);
     this.info.innerHTML = `
       <h2>${game.title.join(' ')}</h2>

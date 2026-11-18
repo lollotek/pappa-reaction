@@ -1150,7 +1150,7 @@ body.hub {
   margin: 4px 0 0;
 }
 .hub-tagline {
-  font-size: clamp(15px, 2vw, 22px);
+  font-size: clamp(16px, 2.2vw, 24px);
 }
 .hub-players {
   color: #c9c2d6;
@@ -1160,6 +1160,47 @@ body.hub {
   margin-top: 10px !important;
   color: #8c849a;
   font-size: clamp(12px, 1.4vw, 16px);
+}
+.hub-info {
+  padding: 8px 14px 10px;
+  background: rgba(0, 0, 0, 0.62);
+  border-radius: 14px;
+}
+.hub-play {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  transform: translate(-50%, -50%);
+}
+.hub-play button {
+  font: inherit;
+  font-weight: 700;
+  font-size: clamp(20px, 3.2vw, 36px);
+  padding: 0.35em 1.1em;
+  color: #2a1a05;
+  background: #ffb347;
+  border: 3px solid #000;
+  border-radius: 999px;
+  box-shadow:
+    0 5px 0 #8a4f12,
+    0 0 0 3px rgba(255, 179, 71, 0.35);
+  cursor: pointer;
+  touch-action: manipulation;
+  animation: hub-play-pulse 1.4s ease-in-out infinite;
+}
+.hub-play button:active {
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 #8a4f12;
+}
+@keyframes hub-play-pulse {
+  50% {
+    filter: brightness(1.15);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hub-play button {
+    animation: none;
+  }
 }
 .hub-fade {
   position: fixed;
