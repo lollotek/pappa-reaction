@@ -20,6 +20,11 @@ export class BackButton {
     });
   }
 
+  /** Voci aggiunte alla cronologia e non ancora consumate (0 o 1). */
+  get extraEntries(): number {
+    return this.armed ? 1 : 0;
+  }
+
   /** Da chiamare quando si entra in una schermata dove Indietro ha senso. */
   arm(): void {
     if (this.armed) return;

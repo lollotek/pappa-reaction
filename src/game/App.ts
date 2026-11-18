@@ -18,6 +18,7 @@ import { touchLayout, type Insets } from '../input/touchLayout';
 import { BackButton } from '../platform/BackButton';
 import { Device, installMode } from '../platform/Device';
 import { diagnosticsLine } from '../platform/diagnostics';
+import { backToHub } from '../platform/navigation';
 import {
   MAX_TOUCH_HUMANS,
   TOUCH_PREFS,
@@ -61,10 +62,12 @@ export interface AppDeps {
   keyboard: Keyboard;
   store: KeyValueStore | null;
   settings: Settings;
+  /** Indirizzo dell'hub di Priamo Stadium ("Torna all'hub"). */
+  hubUrl: string;
 }
 
 /**
- * Flusso del gioco: titolo e menu (con una partita dimostrativa tra CPU
+ * Flusso di Pappa Reaction: titolo e menu (con una partita dimostrativa tra CPU
  * sullo sfondo), partita, pausa, classifica e rivincita.
  */
 export class App {
@@ -321,25 +324,36 @@ export class App {
   private showTitle(): void {
     this.logo.hidden = false;
     this.openMenu(
-      new MenuModel('', [
-        {
-          kind: 'action',
-          label: 'Gioca',
-          onSelect: () => {
-            this.enterFullscreenIfWanted();
-            this.showSetup();
+      new MenuModel(
+        '',
+        [
+          {
+            kind: 'action',
+            label: 'Gioca',
+            onSelect: () => {
+              this.enterFullscreenIfWanted();
+              this.showSetup();
+            },
+            accent: true,
           },
-          accent: true,
-        },
-        { kind: 'action', label: 'Regole', onSelect: () => this.showRules() },
-        { kind: 'action', label: 'Comandi', onSelect: () => this.showControls() },
-        { kind: 'action', label: 'Opzioni', onSelect: () => this.showOptions() },
-        ...this.installItems(),
-      ]),
+          { kind: 'action', label: 'Regole', onSelect: () => this.showRules() },
+          { kind: 'action', label: 'Comandi', onSelect: () => this.showControls() },
+          { kind: 'action', label: 'Opzioni', onSelect: () => this.showOptions() },
+          ...this.installItems(),
+          { kind: 'action', label: "Torna all'hub", onSelect: () => this.goToHub() },
+        ],
+        // ESC e Indietro (Android) dal titolo riportano all'hub.
+        () => this.goToHub(),
+      ),
       '',
       'menu-title',
     );
     this.titleMenu = this.menu;
+  }
+
+  private goToHub(): void {
+    this.closeMenus();
+    backToHub(this.deps.hubUrl, this.backButton.extraEntries);
   }
 
   /** Rifà il menu del titolo se è aperto (es. il browser ora permette di installare). */
@@ -378,9 +392,9 @@ export class App {
 
   private showInstallHelp(): void {
     const steps = this.device.isIos
-      ? '<p class="menu-text">In <b>Safari</b> tocca <b>Condividi</b> (il quadrato con la freccia), poi <b>Aggiungi alla schermata Home</b>. Apri Pappa dalla sua icona: su iPhone è l’unico modo per giocare a schermo intero.</p>' +
+      ? '<p class="menu-text">In <b>Safari</b> tocca <b>Condividi</b> (il quadrato con la freccia), poi <b>Aggiungi alla schermata Home</b>. Apri Priamo Stadium dalla sua icona: su iPhone è l’unico modo per giocare a schermo intero.</p>' +
         '<p class="menu-text">Se il link si è aperto dentro un’app (WhatsApp, Instagram…), aprilo prima in Safari.</p>'
-      : '<p class="menu-text">Apri il menu del browser (<b>⋮</b>) e scegli <b>Installa app</b> o <b>Aggiungi a schermata Home</b>, poi apri Pappa dalla sua icona.</p>' +
+      : '<p class="menu-text">Apri il menu del browser (<b>⋮</b>) e scegli <b>Installa app</b> o <b>Aggiungi a schermata Home</b>, poi apri Priamo Stadium dalla sua icona.</p>' +
         '<p class="menu-text">Se il link si è aperto dentro un’app (WhatsApp, Instagram…), aprilo prima in Chrome.</p>';
     this.openMenu(
       new MenuModel(
@@ -628,7 +642,8 @@ export class App {
   private openMenu(model: MenuModel, extra: string | (() => string) = '', variant = ''): void {
     this.keyTest.hide();
     this.buttonTest.hide();
-    if (variant !== 'menu-title') this.backButton.arm();
+    // Anche sul titolo: lì l'Indietro torna all'hub (che a sua volta esce dall'app).
+    this.backButton.arm();
     if (this.mode !== 'paused' || !this.session) this.mode = 'menu';
     this.logo.hidden = variant !== 'menu-title';
     this.menu = model;

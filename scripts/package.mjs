@@ -1,4 +1,4 @@
-// Crea release/pappa-reaction-<versione>.zip dalla cartella dist/ (dopo `vite build`).
+// Crea release/priamo-stadium-<versione>.zip dalla cartella dist/ (dopo `vite build`).
 // Zip scritto a mano con zlib di Node: nessuna dipendenza in più.
 import { readFileSync, readdirSync, statSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
@@ -66,7 +66,7 @@ end.writeUInt32LE(centralSize, 12);
 end.writeUInt32LE(offset, 16);
 
 mkdirSync(join(root, 'release'), { recursive: true });
-const out = join(root, 'release', `pappa-reaction-${version}.zip`);
+const out = join(root, 'release', `priamo-stadium-${version}.zip`);
 writeFileSync(out, Buffer.concat([...local, ...central, end]));
 console.log(
   `Creato ${relative(root, out)} (${files.length} file, ${(statSync(out).size / 1024).toFixed(0)} kB)`,

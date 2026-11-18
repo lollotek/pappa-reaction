@@ -1,131 +1,71 @@
 import '@fontsource/fredoka/400.css';
 import '@fontsource/fredoka/700.css';
 import './style.css';
-import { AudioEngine } from './audio/AudioEngine';
 import { playerSlots } from './config/controls';
-import { parseMatchSetup } from './config/matchSetup';
-import { loadSettings, type KeyValueStore } from './config/settings';
+import type { KeyValueStore } from './config/settings';
 import { tuning } from './config/tuning';
-import { App } from './game/App';
-import { Keyboard } from './input/Keyboard';
+import { PLAYABLE_IDS } from './games/registry';
+import { legacyRedirect, parseRoute } from './platform/routes';
 import { PixelRenderer } from './render/PixelRenderer';
-import { ARENA_MAPS, type ArenaMap } from './render/Arena';
-import { MatchScene } from './scenes/MatchScene';
-import { Showroom } from './scenes/Showroom';
 
 const container = document.getElementById('app');
 if (!container) throw new Error('#app mancante');
 
-const pixel = new PixelRenderer(container, tuning.render.targetHeight);
 const params = new URLSearchParams(location.search);
+const route = parseRoute(location.pathname, PLAYABLE_IDS);
+const hubUrl = `${location.origin}${route.base}`;
 
-// Overlay di debug (fps, risoluzione, seed, fase): solo con `?debug`, poi F3 lo mostra/nasconde.
-const debug = document.getElementById('debug')!;
-const debugAllowed = params.has('debug');
-let showDebug = debugAllowed;
-debug.hidden = !showDebug;
-window.addEventListener('keydown', (e) => {
-  if (e.code === 'F3' && debugAllowed) {
-    e.preventDefault();
-    showDebug = !showDebug;
-    debug.hidden = !showDebug;
-  }
-});
+// Vecchi link con i parametri di Pappa sulla pagina principale: si va a /pappa/.
+const redirect = legacyRedirect(route, location.search);
+if (redirect) location.replace(redirect);
+else boot(container);
 
-// Vetrina dei gatti (?vetrina): modelli e pose da vicino, per la revisione grafica.
-if (params.has('vetrina')) startShowroom(container);
-else startGame(container);
+function boot(root: HTMLElement): void {
+  const pixel = new PixelRenderer(root, tuning.render.targetHeight);
 
-function startShowroom(root: HTMLElement): void {
-  const showroom = new Showroom(playerSlots, root);
-  pixel.attachCamera(showroom.camera);
-  const loop = (now: number) => {
-    showroom.update(now);
-    pixel.render(showroom.scene, showroom.camera);
-    requestAnimationFrame(loop);
-  };
-  requestAnimationFrame(loop);
-}
-
-function startGame(root: HTMLElement): void {
-  const store = safeStorage();
-  const settings = loadSettings(store, playerSlots);
-  // Mappa a caso a ogni partita; `?mappa=balcone` (salotto, giardino) la forza per i test.
-  const mapParam = params.get('mappa');
-  const map = ARENA_MAPS.find((id): id is ArenaMap => id === mapParam);
-  const scene = new MatchScene(playerSlots, map);
-  pixel.attachCamera(scene.camera);
-  const audio = new AudioEngine();
-  const keyboard = new Keyboard(settings.keys);
-  const app = new App({
-    container: root,
-    slots: playerSlots,
-    scene,
-    pixel,
-    audio,
-    keyboard,
-    store,
-    settings,
+  // Overlay di debug (fps, risoluzione, seed, fase): solo con `?debug`, poi F3 lo mostra/nasconde.
+  const debugEl = document.getElementById('debug')!;
+  const debugAllowed = params.has('debug');
+  let showDebug = debugAllowed;
+  debugEl.hidden = !showDebug;
+  window.addEventListener('keydown', (e) => {
+    if (e.code === 'F3' && debugAllowed) {
+      e.preventDefault();
+      showDebug = !showDebug;
+      debugEl.hidden = !showDebug;
+    }
   });
+  const debug = debugAllowed ? { el: debugEl, visible: () => showDebug } : null;
 
-  // Parametri di sviluppo (?cpu=2,3,4&diff=normale&seed=123): si salta il menu.
-  if (params.has('cpu') || params.has('diff') || params.has('seed')) {
-    const setup = parseMatchSetup(location.search, playerSlots.length);
-    app.startDirect({
-      players: setup.cpu.map((c) => (c ? 'cpu' : 'human')),
-      difficulty: setup.difficulty,
-      seed: setup.seed,
+  // Vetrina dei gatti (?vetrina): modelli e pose da vicino, per la revisione grafica.
+  if (params.has('vetrina')) {
+    void import('./scenes/Showroom').then(({ Showroom }) => {
+      const showroom = new Showroom(playerSlots, root);
+      pixel.attachCamera(showroom.camera);
+      const loop = (now: number) => {
+        showroom.update(now);
+        pixel.render(showroom.scene, showroom.camera);
+        requestAnimationFrame(loop);
+      };
+      requestAnimationFrame(loop);
     });
+  } else if (route.game === 'pappa') {
+    void import('./games/pappa/startPappa').then(({ startPappa }) =>
+      startPappa({ root, pixel, params, store: safeStorage(), hubUrl, debug }),
+    );
   } else {
-    app.start();
+    // Le scritte delle schede si disegnano col font del gioco: prima va caricato.
+    const font = document.fonts?.load("700 16px 'Fredoka'").catch(() => []);
+    void Promise.all([import('./hub/Hub'), font]).then(([{ Hub }]) =>
+      new Hub(root, pixel, route.base, debug).start(),
+    );
   }
-
-  // Solo in sviluppo: accesso da console per test e debug.
-  if (import.meta.env.DEV) {
-    Object.assign(window, {
-      __pappa: {
-        app,
-        audio,
-        renderer: pixel.renderer,
-        get machine() {
-          return app.currentSession?.machine;
-        },
-      },
-    });
-  }
-
-  let fpsFrames = 0;
-  let fpsSince = performance.now();
-  let fps = 0;
-  const frame = (now: number) => {
-    app.frame(now);
-
-    fpsFrames++;
-    if (now - fpsSince >= 500) {
-      fps = Math.round((fpsFrames * 1000) / (now - fpsSince));
-      fpsFrames = 0;
-      fpsSince = now;
-    }
-    const session = app.currentSession;
-    if (showDebug && session) {
-      const m = session.machine;
-      const l = pixel.layout;
-      const left = Math.max(0, m.phaseEndsAt() - session.clock.now(now));
-      debug.textContent =
-        `${fps} fps · ${l.width}×${l.height} ×${l.scale} · seed ${session.seed}\n` +
-        `round ${m.round}${m.suddenDeath ? ' (spareggio)' : ''} · ${m.phase} · ` +
-        `${Number.isFinite(left) ? (left / 1000).toFixed(2) + 's' : '…'} · ${m.content.id}` +
-        (session.paused ? ' · PAUSA' : '');
-    }
-    requestAnimationFrame(frame);
-  };
-  requestAnimationFrame(frame);
 }
 
 // PWA: service worker per giocare offline (solo nella build pubblicata, su https o localhost).
 if (import.meta.env.PROD && 'serviceWorker' in navigator && window.isSecureContext) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(() => {
+    navigator.serviceWorker.register(`${route.base}sw.js`).catch(() => {
       /* senza service worker il gioco funziona lo stesso, solo non offline */
     });
   });

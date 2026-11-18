@@ -1,4 +1,4 @@
-# Pappa Reaction — Roadmap tecnica
+# Priamo Stadium / Pappa Reaction — Roadmap tecnica
 
 > Riferimento di design: [GDD.md](GDD.md) · Dubbi da chiudere: [DOMANDE_APERTE.md](DOMANDE_APERTE.md)
 
@@ -18,8 +18,17 @@
 Separazione netta tra **logica** (deterministica, testabile) e **presentazione** (Three.js, audio).
 
 ```
+index.html                hub (pagina principale)
+pappa/index.html          Pappa Reaction (sottopercorso /pappa/)
 src/
-  main.ts                 bootstrap, game loop
+  main.ts                 bootstrap: sceglie hub o gioco dal percorso, debug, service worker
+  hub/
+    Hub.ts                schede dei giochi: tastiera, tocco, apertura del gioco
+    HubScene.ts           scena 3D dell'hub (schede, gatti, camera che inquadra tutto)
+    cardArt.ts            faccia delle schede in pixel art
+  games/
+    registry.ts           elenco dei minigiochi (titolo, colori, pronto/prossimamente)
+    pappa/startPappa.ts   avvio di Pappa Reaction (scena, audio, tastiera, App, game loop)
   config/
     tuning.ts             tutti i parametri di bilanciamento
     controls.ts           mappa tasti per giocatore
@@ -243,6 +252,17 @@ public/
 - [ ] Prestazioni su un telefono di fascia bassa (fps, temperatura, batteria in 10 minuti)
 
 Idee per dopo, non pianificate: 3–4 giocatori con il dispositivo piatto sul tavolo e telefoni usati come controller (vedi [GDD §12.7](GDD.md#127-idee-per-dopo-non-pianificate)).
+
+### Hub Priamo Stadium e minigiochi (M11)
+
+- [x] Hub 3D su fondo nero con le schede dei giochi (Pappa Reaction, Scaccia la palla "prossimamente"), tastiera, mouse e tocco
+- [x] Un sottopercorso per gioco (`/pappa/`), con i suoi parametri URL; i vecchi link `/?cpu=…` vengono spostati su `/pappa/`
+- [x] Build a più pagine (Vite) e service worker con una copia offline per pagina
+- [x] "Torna all'hub" dal titolo di Pappa (anche ESC e Indietro); ritorno con la cronologia, così sull'hub l'Indietro esce dall'app
+- [x] Nome dell'app, del pacchetto e dello zip: Priamo Stadium
+- [ ] Prova su dispositivi veri (PWA installata: passaggio hub ↔ gioco, Indietro di Android, offline)
+- [ ] Scaccia la palla: regole (GDD), poi pagina `/scaccia/` e scheda attiva
+- **Per aggiungere un gioco**: voce in `src/games/registry.ts`, pagina `<id>/index.html`, voce in `PAGES` di `vite.config.ts`, ramo in `main.ts`.
 
 ## 4. Ordine consigliato e rischi
 

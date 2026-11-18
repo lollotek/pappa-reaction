@@ -1,4 +1,15 @@
-# Pappa Reaction (Priamo Stadium)
+# Priamo Stadium
+
+Raccolta di minigiochi con quattro gatti, in Three.js. All'avvio si apre l'**hub**: le schede dei giochi in 3D su fondo nero (frecce o tocco per scegliere, INVIO o tocco per giocare).
+
+| Gioco                | Percorso  | Stato         |
+| -------------------- | --------- | ------------- |
+| **Pappa Reaction**   | `/pappa/` | giocabile     |
+| **Scaccia la palla** | —         | prossimamente |
+
+Ogni gioco ha la sua pagina in un sottopercorso, con i propri parametri URL. Le impostazioni (volumi, tasti, pulsanti touch, schermo intero) sono le stesse per tutti i giochi. Dal titolo di un gioco **Torna all'hub** (o `ESC`, o l'Indietro di Android) riporta all'hub.
+
+## Pappa Reaction
 
 Minigioco di riflessi per 1–4 giocatori su tastiera, in Three.js: quattro gatti — Priamo, Tempesta, Poh e Mariù — girano attorno a una ciotola coperta e devono scattare appena la mano alza il coperchio. Ma attenzione a finte e cacchette.
 
@@ -32,6 +43,8 @@ Dal titolo scegli **Gioca**, decidi chi è umano e chi CPU, poi **Inizia!**. Tas
 
 ### Parametri URL per lo sviluppo
 
+I parametri di Pappa Reaction vanno sulla sua pagina (`/pappa/?cpu=…`); i vecchi link sulla pagina principale (`/?cpu=…`) vengono spostati lì da soli.
+
 - `?cpu=2,3,4&diff=normale&seed=123` salta il menu e avvia subito una partita (`cpu=none` tutti umani; `seed` rigioca una partita identica)
 - `?vetrina` mostra i 4 gatti da vicino per rivedere modelli e pose (←/→ posa, SPAZIO rotazione, A automatico)
 - `?debug` mostra l'overlay di debug (fps, risoluzione, seed, fase del round); con `?debug` attivo `F3` lo nasconde e lo rimostra. In sviluppo `window.__pappa` dà accesso a partita e audio dalla console
@@ -47,12 +60,12 @@ npm run build    # typecheck + build statica in dist/
 npm run lint     # ESLint
 npm run format   # Prettier
 npm run balance  # simulazione di bilanciamento CPU (percentuali di vittoria)
-npm run package  # build + release/pappa-reaction-<versione>.zip
+npm run package  # build + release/priamo-stadium-<versione>.zip
 ```
 
 ## Pubblicazione
 
-`npm run package` crea uno zip con il gioco già compilato (pagina, codice, font, icona; tutti i percorsi sono relativi).
+`npm run package` crea uno zip con il gioco già compilato (hub, pagina di ogni gioco, codice, font, icona; tutti i percorsi sono relativi).
 
 - **itch.io**: nuovo progetto → _Kind of project_: HTML → carica lo zip e spunta _This file will be played in the browser_. Dimensione consigliata della finestra: 1280×720, con il pulsante schermo intero attivo.
 - **Hosting statico** (GitHub Pages, Netlify, un qualsiasi server web): estrai lo zip e pubblica i file così come sono.

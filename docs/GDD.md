@@ -1,7 +1,7 @@
 # Pappa Reaction — Game Design Document
 
 > Minigioco di riflessi per 1–4 giocatori su tastiera, realizzato in Three.js.
-> Nome provvisorio: **Pappa Reaction** (fa parte del progetto _Priamo Stadium_).
+> Nome provvisorio: **Pappa Reaction**, primo minigioco di _Priamo Stadium_ (hub dei minigiochi: §13).
 > Versione documento: 0.2 — 2026-11-12 (aggiunta la versione mobile per 1–2 giocatori, §12)
 
 ---
@@ -39,7 +39,7 @@ Le statistiche dei gatti sono **identiche** (solo estetica), per mantenere il gi
 - **Struttura centrale**: una ciotola/piatto grande coperto da un **coperchio di legno** (a cupola).
 - **La mano arbitro**: scende dall'alto, afferra il pomello del coperchio e lo solleva. È il "telegrafo" di tutte le azioni del round (finte comprese). Al reveal la mano strappa il coperchio verso l'alto, fuori dall'inquadratura, così nessun gatto resta nascosto; a fine round lo riabbassa.
 - **Ambientazione**: salotto di casa — parquet, parete con finestra e quadretti, libreria, tiragraffi, piante; la pista è un tappeto rotondo intrecciato (fascia chiara).
-- **Seconda mappa — balcone**: pavimento in cotto color mattone, facciata con persiane, ringhiere e vasi; i gatti nuotano in una piscinetta gonfiabile (con paperella) invece di correre sul tappeto. 
+- **Seconda mappa — balcone**: pavimento in cotto color mattone, facciata con persiane, ringhiere e vasi; i gatti nuotano in una piscinetta gonfiabile (con paperella) invece di correre sul tappeto.
 - **Terza mappa — giardino**: prato con siepe, steccato, girasoli e cespugli; i gatti corrono su uno spiazzo di terra battuta (pista più scura con impronte, polvere marrone).
 - A ogni nuova partita la mappa è scelta a caso, diversa dalla precedente (`?mappa=salotto|balcone|giardino` la forza per i test).
 
@@ -245,3 +245,14 @@ La rimappatura dei tasti resta disponibile solo con la tastiera.
 
 - **3–4 giocatori sul tavolo**: dispositivo piatto, due zone touch per angolo. Richiede una vista leggibile da entrambi i lati (camera dall'alto, HUD ruotato), zone lontane dai bordi e attenzione al limite di ~5 tocchi di iPhone.
 - **Telefoni come controller** (uno per giocatore o uno condiviso), abbinati con un QR: serve un server di collegamento (WebRTC o WebSocket), la sincronizzazione degli orologi tra i dispositivi e un margine prima di decidere il round. Da valutare misurando prima latenza e jitter della Wi-Fi.
+
+## 13. Priamo Stadium: hub dei minigiochi
+
+Pappa Reaction è il primo di una serie di minigiochi con gli stessi quattro gatti, riuniti sotto il nome **Priamo Stadium** (anche il nome dell'app installata).
+
+- **Hub**: scena 3D su fondo nero con una scheda per gioco; i quattro gatti, due per lato, guardano la scheda selezionata. Frecce (o A/D) per scegliere, INVIO/SPAZIO o un tocco per giocare; i tasti 1–9 aprono subito il gioco corrispondente. Il gioco scelto vola verso la camera e si apre la sua pagina.
+- **Schede "prossimamente"**: si vedono ma non si aprono (la scheda scuote la testa). Per ora c'è **Scaccia la palla**.
+- **Indirizzi**: l'hub è la pagina principale, ogni gioco ha un sottopercorso (`/pappa/`) con i suoi parametri URL.
+- **Ritorno**: a fine partita "Torna al menu" porta al titolo del gioco; dal titolo **Torna all'hub** (o ESC, o l'Indietro di Android). Sull'hub l'Indietro di Android esce dall'app.
+- **Impostazioni comuni**: volumi, tasti dei gatti, pulsanti touch e schermo intero valgono per tutti i giochi.
+- Per ora niente statistiche o trofei condivisi tra i giochi.

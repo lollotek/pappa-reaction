@@ -103,8 +103,9 @@ describe('service worker', () => {
   ];
 
   it('scarica subito pagina, codice, stili e font woff2', () => {
-    expect(precacheList(bundle)).toEqual([
+    expect(precacheList(bundle, ['index.html', 'pappa/index.html'])).toEqual([
       './',
+      './pappa/',
       './assets/index-abc.js',
       './assets/index-def.css',
       './assets/font-latin.woff2',
@@ -118,10 +119,15 @@ describe('service worker', () => {
     expect(cacheIdFor(precacheList(['assets/index-xyz.js']))).not.toBe(a);
   });
 
+  it('ogni pagina (hub e giochi) ha la sua copia, dalla più specifica', () => {
+    const src = serviceWorkerSource(['./', './pappa/', './assets/a.js'], '1234abcd');
+    expect(src).toContain('const PAGES = ["./pappa/","./"]');
+  });
+
   it('il codice generato è JavaScript valido e contiene cache ed elenco', () => {
     const src = serviceWorkerSource(['./', './assets/a.js'], '1234abcd');
     expect(() => new Function(src)).not.toThrow();
-    expect(src).toContain('"pappa-1234abcd"');
+    expect(src).toContain('"priamo-1234abcd"');
     expect(src).toContain('"./assets/a.js"');
   });
 });
