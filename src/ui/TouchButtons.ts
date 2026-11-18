@@ -7,10 +7,14 @@ interface ButtonEl {
   el: HTMLElement;
   /** Dita appoggiate in questo momento. */
   pointers: Set<number>;
+  /** Striscia: posizione dell'ultimo dito (0 = sinistra, 1 = destra), null se nessuno. */
+  value: number | null;
+  knob: HTMLElement | null;
 }
 
 /**
- * Pulsanti touch SCATTO e FINTA disegnati nel DOM sopra la scena.
+ * Pulsanti touch disegnati nel DOM sopra la scena: SCATTO e FINTA (Pappa) o
+ * SMASH e la striscia da trascinare (Scaccia la palla).
  * Ogni appoggio del dito è una pressione (tenere premuto non ripete).
  * Il feedback è identico per scatto e finta: non deve tradire la finta.
  */
@@ -25,6 +29,8 @@ export class TouchButtons {
   constructor(
     container: HTMLElement,
     private readonly slots: readonly PlayerSlot[],
+    /** Scritta sul pulsante principale (SCATTO, SMASH). */
+    private readonly dashLabel = 'SCATTO',
   ) {
     this.root = document.createElement('div');
     this.root.className = 'touch-buttons';
@@ -67,8 +73,18 @@ export class TouchButtons {
     this.root.hidden = true;
     this.buttons.forEach((b) => {
       b.pointers.clear();
+      b.value = null;
       b.el.classList.remove('held');
     });
+  }
+
+  /** Posizione del dito sulla striscia del giocatore (0..1), null se non c'è un dito. */
+  stripValue(player: number): number | null {
+    if (this.root.hidden) return null;
+    for (const b of this.buttons) {
+      if (b.spec.player === player && b.spec.action === 'move') return b.value;
+    }
+    return null;
   }
 
   /** Pulsanti spenti per chi è stordito o in panchina. */
@@ -85,11 +101,26 @@ export class TouchButtons {
     el.style.setProperty('--badge', slot.badgeColor);
     el.innerHTML =
       spec.action === 'dash'
-        ? `<span class="touch-label">SCATTO</span><span class="touch-name">${slot.name}</span>`
-        : `<span class="touch-label">FINTA</span>`;
+        ? `<span class="touch-label">${this.dashLabel}</span><span class="touch-name">${slot.name}</span>`
+        : spec.action === 'move'
+          ? '<span class="touch-knob"></span><span class="touch-label">◀ trascina ▶</span>'
+          : '<span class="touch-label">FINTA</span>';
     this.place(el, spec);
     this.root.appendChild(el);
-    const b: ButtonEl = { spec, el, pointers: new Set() };
+    const b: ButtonEl = {
+      spec,
+      el,
+      pointers: new Set(),
+      value: null,
+      knob: el.querySelector<HTMLElement>('.touch-knob'),
+    };
+    // Striscia: la posizione del dito lungo la striscia, anche se scivola fuori.
+    const track = (e: PointerEvent) => {
+      if (b.spec.action !== 'move') return;
+      const r = el.getBoundingClientRect();
+      b.value = Math.min(1, Math.max(0, (e.clientX - r.left) / Math.max(1, r.width)));
+      if (b.knob) b.knob.style.left = `${b.value * 100}%`;
+    };
 
     el.addEventListener('pointerdown', (e) => {
       e.preventDefault();
@@ -97,12 +128,20 @@ export class TouchButtons {
       capture(el, e.pointerId);
       b.pointers.add(e.pointerId);
       el.classList.add('held');
-      this.onPress(b.spec.player, b.spec.action, e.timeStamp);
+      track(e);
+      const action = b.spec.action;
+      if (action !== 'move') this.onPress(b.spec.player, action, e.timeStamp);
       this.onHeldChange();
+    });
+    el.addEventListener('pointermove', (e) => {
+      if (b.pointers.has(e.pointerId)) track(e);
     });
     const release = (e: PointerEvent) => {
       if (!b.pointers.delete(e.pointerId)) return;
-      if (b.pointers.size === 0) el.classList.remove('held');
+      if (b.pointers.size === 0) {
+        el.classList.remove('held');
+        b.value = null;
+      }
       this.onHeldChange();
     };
     el.addEventListener('pointerup', release);
@@ -113,11 +152,12 @@ export class TouchButtons {
   }
 
   private place(el: HTMLElement, s: TouchButtonSpec): void {
-    el.style.left = `${s.cx - s.size / 2}px`;
+    const w = s.width ?? s.size;
+    el.style.left = `${s.cx - w / 2}px`;
     el.style.top = `${s.cy - s.size / 2}px`;
-    el.style.width = `${s.size}px`;
+    el.style.width = `${w}px`;
     el.style.height = `${s.size}px`;
-    el.style.fontSize = `${Math.round(s.size * 0.17)}px`;
+    el.style.fontSize = `${Math.round(s.size * (s.width ? 0.2 : 0.17))}px`;
   }
 }
 

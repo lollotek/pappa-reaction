@@ -27,7 +27,14 @@ describe('settings', () => {
     expect(def.players).toEqual(['human', 'cpu', 'cpu', 'cpu']);
     expect(def.difficulty).toBe('normale');
     expect(def.roundCount).toBe(5);
-    expect(def.keys[0]).toEqual({ dash: 'KeyQ', fake: 'KeyA' });
+    expect(def.keys[0]).toEqual({
+      dash: 'KeyQ',
+      fake: 'KeyA',
+      left: 'KeyZ',
+      right: 'KeyX',
+      up: '',
+      down: '',
+    });
   });
 
   it('salva e rilegge', () => {
@@ -68,8 +75,8 @@ describe('settings', () => {
   });
 
   it('assegna un tasto libero', () => {
-    const r = assignKey(def.keys, 0, 'dash', 'KeyZ');
-    expect(r.ok && r.keys[0]).toEqual({ dash: 'KeyZ', fake: 'KeyA' });
+    const r = assignKey(def.keys, 0, 'dash', 'KeyK');
+    expect(r.ok && r.keys[0]).toEqual({ ...def.keys[0], dash: 'KeyK' });
     expect(r.ok && r.swapped).toBe(false);
     expect(def.keys[0].dash).toBe('KeyQ'); // input non modificato
   });
@@ -81,8 +88,35 @@ describe('settings', () => {
     expect(r.keys[0].dash).toBe('KeyT');
     expect(r.keys[1].dash).toBe('KeyQ');
     expect(r.swapped).toBe(true);
-    const all = r.keys.flatMap((k) => [k.dash, k.fake]);
+    const all = r.keys.flatMap((k) => Object.values(k)).filter((c) => c !== '');
     expect(new Set(all).size).toBe(all.length);
+  });
+
+  it('direzioni: si scambiano con gli altri tasti; su e giù possono restare senza tasto', () => {
+    const r = assignKey(def.keys, 0, 'left', 'KeyT');
+    expect(r.ok && r.keys[0].left).toBe('KeyT');
+    expect(r.ok && r.keys[1].dash).toBe('KeyZ');
+    // Un tasto di scatto non può finire "senza tasto" per far posto a "su".
+    expect(assignKey(def.keys, 0, 'up', 'KeyT').ok).toBe(false);
+    const up = assignKey(def.keys, 0, 'up', 'KeyW');
+    expect(up.ok && up.keys[0].up).toBe('KeyW');
+    // "Giù" prende il tasto di "su", che resta senza.
+    if (!up.ok) return;
+    const down = assignKey(up.keys, 0, 'down', 'KeyW');
+    expect(down.ok && [down.keys[0].up, down.keys[0].down]).toEqual(['', 'KeyW']);
+  });
+
+  it('salvataggi di prima delle direzioni: si aggiungono i predefiniti liberi', () => {
+    const store = new MemoryStore();
+    // Tasti di una versione vecchia: solo scatto e finta; Poh usa Z, il "sinistra" di Priamo.
+    const old = def.keys.map((k) => ({ dash: k.dash, fake: k.fake }));
+    old[2].dash = 'KeyZ';
+    store.setItem('pappa.settings', JSON.stringify({ keys: old }));
+    const keys = loadSettings(store, playerSlots).keys;
+    expect(keys[2].dash).toBe('KeyZ');
+    expect(keys[0].left).toBe(''); // occupato: resta senza tasto
+    expect(keys[0].right).toBe('KeyX');
+    expect(keys[3].left).toBe('ArrowLeft');
   });
 
   it('rifiuta i tasti riservati', () => {

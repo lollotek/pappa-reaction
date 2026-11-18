@@ -1,5 +1,26 @@
 import type { PlayerAction, TimedInput } from '../core/MatchMachine';
 
+/** Direzione tenuta: x (sinistra −1 … destra +1), y (su −1 … giù +1). */
+export interface Axis {
+  x: number;
+  y: number;
+}
+
+export const NO_AXIS: Axis = { x: 0, y: 0 };
+
+/**
+ * Comandi di un frame per la partita: pressioni con il loro istante,
+ * direzioni tenute (tastiera + controller) e striscia touch (posizione del
+ * dito 0..1 da sinistra a destra, null se nessun dito), per giocatore.
+ */
+export interface FrameInput {
+  presses: readonly TimedInput[];
+  axes: readonly Axis[];
+  strips: readonly (number | null)[];
+}
+
+export const EMPTY_INPUT: FrameInput = { presses: [], axes: [], strips: [] };
+
 /** Sorgente di pressioni dei gatti (tastiera, tocco) con il loro timestamp. */
 export interface InputSource {
   drain(): TimedInput[];

@@ -261,8 +261,23 @@ Idee per dopo, non pianificate: 3–4 giocatori con il dispositivo piatto sul ta
 - [x] "Torna all'hub" dal titolo di Pappa (anche ESC e Indietro); ritorno con la cronologia, così sull'hub l'Indietro esce dall'app
 - [x] Nome dell'app, del pacchetto e dello zip: Priamo Stadium
 - [ ] Prova su dispositivi veri (PWA installata: passaggio hub ↔ gioco, Indietro di Android, offline)
-- [ ] Scaccia la palla: regole (GDD), poi pagina `/scaccia/` e scheda attiva
-- **Per aggiungere un gioco**: voce in `src/games/registry.ts`, pagina `<id>/index.html`, voce in `PAGES` di `vite.config.ts`, ramo in `main.ts`.
+- [x] Scaccia la palla: regole (GDD), poi pagina `/scaccia/` e scheda attiva (M12)
+- **Per aggiungere un gioco**: voce in `src/games/registry.ts`, pagina `<id>/index.html`, voce in `PAGES` di `vite.config.ts`, ramo in `main.ts`, un `GameDef` (vedi sotto) e una funzione di avvio come `startPappa`.
+
+### Scaccia la palla (M12) ✅ (2026-11-18, provato in browser e in emulazione touch: da provare su dispositivi veri e con controller veri)
+
+Regole: [GDD_SCACCIA.md](GDD_SCACCIA.md).
+
+- [x] **App comune** (`src/game/App.ts`): titolo con demo, menu, Comandi, Opzioni, Regole, pausa, touch, Indietro e controller sono gli stessi per tutti i giochi. Ogni gioco dà un `GameDef` (`src/game/GameDef.ts`): partite (`GameSession`), voci di menu proprie, tasti usati, tipo di comandi touch, testi. Pappa: `src/games/pappa/pappaGame.ts`.
+- [x] **Tasti direzione** nelle impostazioni comuni (sinistra, destra, su, giù; su e giù per ora senza tasto); il tasto principale è lo scatto in Pappa e lo smash in Scaccia. I salvataggi vecchi prendono i nuovi tasti predefiniti se liberi.
+- [x] **Controller** (`src/input/Gamepads.ts`) in Pappa, Scaccia, menu e hub.
+- [x] **Striscia touch** da trascinare + SMASH (`stripLayout` in `touchLayout.ts`, `TouchButtons` con `action: 'move'`).
+- [x] Logica pura e deterministica `src/games/scaccia/core/ScacciaMatch.ts` (passo fisso 120 Hz): campo, palline, cuscini, smash ed effetto, nascite, punti, vittoria, limite di tempo e spareggio. Test in `tests/scaccia.test.ts`.
+- [x] CPU che prevede le traiettorie (`src/games/scaccia/ai/ScacciaCpu.ts`), tre difficoltà.
+- [x] Scena nel salotto (`Arena` senza ciotola), tappeto quadrato a spicchi, cuscini d'angolo, cucce, cuscini a salsicciotto, palline-giocattolo, alone, scia, reazioni dei gatti (pose nuove `ready` e `swat`).
+- [x] HUD, effetti sonori, musica.
+- [ ] Playtest con persone vere: velocità delle palline, grandezza del cuscino, forza dello smash e dell'effetto, CPU.
+- [ ] Prova con controller veri (Xbox, PlayStation, generici) e su telefono (striscia).
 
 ## 4. Ordine consigliato e rischi
 

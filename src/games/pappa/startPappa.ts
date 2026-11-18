@@ -7,6 +7,7 @@ import { Keyboard } from '../../input/Keyboard';
 import type { PixelRenderer } from '../../render/PixelRenderer';
 import { ARENA_MAPS, type ArenaMap } from '../../render/Arena';
 import { MatchScene } from '../../scenes/MatchScene';
+import { pappaGame } from './pappaGame';
 
 export interface PappaBoot {
   root: HTMLElement;
@@ -32,7 +33,7 @@ export function startPappa({ root, pixel, params, store, hubUrl, debug }: PappaB
   const app = new App({
     container: root,
     slots: playerSlots,
-    scene,
+    game: pappaGame(scene),
     pixel,
     audio,
     keyboard,

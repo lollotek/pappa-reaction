@@ -14,7 +14,16 @@ export type SfxName =
   | 'eat'
   | 'poop'
   | 'phew'
-  | 'fanfare';
+  | 'fanfare'
+  // Scaccia la palla
+  | 'spawn'
+  | 'swing'
+  | 'hit'
+  | 'smash'
+  | 'wall'
+  | 'jingle'
+  | 'goal'
+  | 'go';
 
 export type Mood = 'happy' | 'annoyed' | 'sad';
 
@@ -181,6 +190,61 @@ export class AudioEngine implements AudioOut {
       case 'phew':
         s.tone({ type: 'triangle', from: noteToFreq('G5'), dur: 0.12, vol: 0.18 });
         s.tone({ type: 'triangle', from: noteToFreq('E5'), dur: 0.2, vol: 0.18, when: t + 0.13 });
+        break;
+      case 'spawn':
+        // "Pop": la pallina salta fuori al centro.
+        s.tone({ type: 'sine', from: 300, to: 820, dur: 0.12, vol: 0.28 });
+        break;
+      case 'swing': {
+        // Zampata che fende l'aria.
+        const pitch = 1 + player * 0.05;
+        s.noiseBurst({
+          filter: 'bandpass',
+          from: 1800 * pitch,
+          to: 700 * pitch,
+          q: 2,
+          dur: 0.12,
+          vol: 0.18,
+        });
+        break;
+      }
+      case 'hit':
+        // Tonfo morbido sul cuscino.
+        s.tone({ type: 'sine', from: 260, to: 140, dur: 0.09, vol: 0.35 });
+        s.noiseBurst({ filter: 'lowpass', from: 700, dur: 0.05, vol: 0.18 });
+        break;
+      case 'smash':
+        s.tone({ type: 'square', from: 520, to: 180, dur: 0.12, vol: 0.14 });
+        s.noiseBurst({ filter: 'highpass', from: 2400, dur: 0.1, vol: 0.25 });
+        s.tone({ type: 'sine', from: 180, to: 90, dur: 0.14, vol: 0.4 });
+        break;
+      case 'wall':
+        s.tone({ type: 'triangle', from: 420, to: 300, dur: 0.06, vol: 0.18 });
+        break;
+      case 'jingle':
+        // Sonaglio dentro la pallina.
+        for (let i = 0; i < 3; i++) {
+          s.tone({
+            type: 'square',
+            from: 2900 + i * 230,
+            dur: 0.035,
+            vol: 0.05,
+            when: t + i * 0.045,
+          });
+        }
+        break;
+      case 'goal': {
+        // Pallina nella cuccia: "tlin tlin" che scende.
+        const notes = ['G5', 'E5', 'C5'];
+        notes.forEach((n, i) =>
+          s.tone({ type: 'triangle', from: noteToFreq(n), dur: 0.1, vol: 0.2, when: t + i * 0.08 }),
+        );
+        s.noiseBurst({ filter: 'lowpass', from: 500, dur: 0.12, vol: 0.25 });
+        break;
+      }
+      case 'go':
+        s.tone({ type: 'square', from: noteToFreq('C6'), dur: 0.08, vol: 0.1 });
+        s.tone({ type: 'square', from: noteToFreq('G6'), dur: 0.18, vol: 0.12, when: t + 0.09 });
         break;
       case 'fanfare': {
         const melody = ['C5', 'E5', 'G5', 'C6', 'G5', 'C6'];

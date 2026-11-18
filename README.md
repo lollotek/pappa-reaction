@@ -2,10 +2,10 @@
 
 Raccolta di minigiochi con quattro gatti, in Three.js. All'avvio si apre l'**hub**: le schede dei giochi in 3D su fondo nero (frecce o tocco per scegliere, INVIO o tocco per giocare).
 
-| Gioco                | Percorso  | Stato         |
-| -------------------- | --------- | ------------- |
-| **Pappa Reaction**   | `/pappa/` | giocabile     |
-| **Scaccia la palla** | —         | prossimamente |
+| Gioco                | Percorso    | Stato     |
+| -------------------- | ----------- | --------- |
+| **Pappa Reaction**   | `/pappa/`   | giocabile |
+| **Scaccia la palla** | `/scaccia/` | giocabile |
 
 Ogni gioco ha la sua pagina in un sottopercorso, con i propri parametri URL. Le impostazioni (volumi, tasti, pulsanti touch, schermo intero) sono le stesse per tutti i giochi. Dal titolo di un gioco **Torna all'hub** (o `ESC`, o l'Indietro di Android) riporta all'hub.
 
@@ -13,9 +13,20 @@ Ogni gioco ha la sua pagina in un sottopercorso, con i propri parametri URL. Le 
 
 Minigioco di riflessi per 1–4 giocatori su tastiera, in Three.js: quattro gatti — Priamo, Tempesta, Poh e Mariù — girano attorno a una ciotola coperta e devono scattare appena la mano alza il coperchio. Ma attenzione a finte e cacchette.
 
+## Scaccia la palla
+
+Ogni gatto difende la sua cuccia dietro a un cuscino a salsicciotto, ai lati di un tappeto quadrato: le palline-giocattolo arrivano dal centro e vanno rimandate nelle cucce degli altri. +1 a chi l'ha toccata per ultima, −1 a chi la subisce; vince il primo a 3, 5 o 7 punti (o chi è in testa allo scadere, con il limite di tempo). Lo **smash** rilancia forte, e correndo di lato dà effetto alla palla. Regole complete nel [GDD di Scaccia la palla](docs/GDD_SCACCIA.md).
+
+Tasti predefiniti: Priamo `Z` `X` + smash `Q` · Tempesta `V` `B` + `T` · Poh `,` `.` + `O` · Mariù `←` `→` + `↑`. Su telefono e tablet: striscia da trascinare e pulsante SMASH. Stessi parametri URL di sviluppo di Pappa (`/scaccia/?cpu=2,3,4&diff=difficile&seed=1`).
+
+## Controller
+
+In tutti e due i giochi e nell'hub funzionano i controller (Gamepad API): il primo controller comanda il primo gatto umano, il secondo il secondo, e così via. Levetta o croce per muoversi e per i menu, **A** (o RB/RT) scatto/smash e conferma, **B** (o X/LB/LT) finta e indietro, **START** pausa.
+
 ## Documentazione
 
-- [Game Design Document](docs/GDD.md) — regole, meccaniche, controlli, CPU, stile
+- [Game Design Document](docs/GDD.md) — Pappa Reaction: regole, meccaniche, controlli, CPU, stile
+- [GDD di Scaccia la palla](docs/GDD_SCACCIA.md) — campo, palline, punti, smash ed effetto, CPU
 - [Roadmap tecnica](docs/ROADMAP.md) — stack, architettura, milestone
 - [Domande aperte](docs/DOMANDE_APERTE.md) — decisioni ancora da prendere
 - [Riferimenti grafici](docs/reference/) — foto dei gatti
@@ -59,7 +70,7 @@ npm test         # test della logica (Vitest)
 npm run build    # typecheck + build statica in dist/
 npm run lint     # ESLint
 npm run format   # Prettier
-npm run balance  # simulazione di bilanciamento CPU (percentuali di vittoria)
+npm run balance  # simulazione di bilanciamento CPU di Pappa (percentuali di vittoria)
 npm run package  # build + release/priamo-stadium-<versione>.zip
 ```
 

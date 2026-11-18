@@ -14,12 +14,15 @@ import type { PlayerAction } from '../core/MatchMachine';
 
 export interface TouchButtonSpec {
   player: number;
-  action: PlayerAction;
+  /** `move`: striscia da trascinare (Scaccia la palla). */
+  action: PlayerAction | 'move';
   side: 'left' | 'right';
   /** Centro e dimensione (lato del quadrato che contiene il pulsante). */
   cx: number;
   cy: number;
   size: number;
+  /** Solo per la striscia: larghezza (l'altezza è `size`). */
+  width?: number;
 }
 
 export interface Insets {
@@ -79,5 +82,84 @@ export function touchLayout(
     { player: a, action: 'dash', side: 'left', cx: leftX, cy: dashY, size: dash },
     { player: b, action: 'fake', side: 'right', cx: rightX, cy: fakeY, size: fake },
     { player: b, action: 'dash', side: 'right', cx: rightX, cy: dashY, size: dash },
+  ];
+}
+
+/** Striscia: larghezza rispetto allo schermo, con minimo e massimo (px CSS). */
+export const STRIP_MIN = 150;
+export const STRIP_MAX = 340;
+
+/**
+ * Comandi touch di Scaccia la palla: una striscia orizzontale su cui si
+ * trascina il dito (la posizione del dito è la posizione del cuscino) e il
+ * pulsante SMASH.
+ *
+ * - 1 giocatore: striscia sotto il pollice sinistro, SMASH sotto il destro.
+ * - 2 giocatori: una colonna per lato, SMASH sopra e striscia sotto.
+ *
+ * Stesse distanze dai bordi e dagli angoli dei pulsanti di Pappa.
+ */
+export function stripLayout(
+  viewW: number,
+  viewH: number,
+  humans: readonly number[],
+  insets: Insets = NO_INSETS,
+): TouchButtonSpec[] {
+  const dash = Math.round(Math.min(DASH_MAX, Math.max(DASH_MIN, viewH * 0.26)));
+  const stripH = Math.round(dash * 0.8);
+  const gap = Math.max(MIN_GAP, Math.round(dash * 0.25));
+  const margin = Math.max(MIN_SIDE_MARGIN, Math.round(viewW * 0.025));
+  const usableTop = insets.top;
+  const usableH = viewH - insets.top - insets.bottom;
+  const leftEdge = insets.left + margin;
+  const rightEdge = viewW - insets.right - margin;
+
+  if (humans.length === 0) return [];
+
+  if (humans.length === 1) {
+    const p = humans[0];
+    const width = Math.round(Math.min(STRIP_MAX, Math.max(STRIP_MIN, viewW * 0.24)));
+    const cy = usableTop + usableH * 0.58;
+    return [
+      {
+        player: p,
+        action: 'move',
+        side: 'left',
+        cx: leftEdge + width / 2,
+        cy,
+        size: stripH,
+        width,
+      },
+      { player: p, action: 'dash', side: 'right', cx: rightEdge - dash / 2, cy, size: dash },
+    ];
+  }
+
+  const width = Math.round(Math.min(STRIP_MAX * 0.8, Math.max(STRIP_MIN * 0.85, viewW * 0.2)));
+  const column = dash + gap + stripH;
+  const top = usableTop + usableH * 0.55 - column / 2;
+  const dashY = top + dash / 2;
+  const stripY = top + dash + gap + stripH / 2;
+  const [a, b] = humans;
+  return [
+    { player: a, action: 'dash', side: 'left', cx: leftEdge + dash / 2, cy: dashY, size: dash },
+    {
+      player: a,
+      action: 'move',
+      side: 'left',
+      cx: leftEdge + width / 2,
+      cy: stripY,
+      size: stripH,
+      width,
+    },
+    { player: b, action: 'dash', side: 'right', cx: rightEdge - dash / 2, cy: dashY, size: dash },
+    {
+      player: b,
+      action: 'move',
+      side: 'right',
+      cx: rightEdge - width / 2,
+      cy: stripY,
+      size: stripH,
+      width,
+    },
   ];
 }

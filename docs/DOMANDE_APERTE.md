@@ -4,6 +4,22 @@ Decisioni ancora da prendere. Quando una domanda è chiusa, spostarla in "Decise
 
 Nessuna domanda aperta al momento.
 
+## Decise (2026-11-18) — Scaccia la palla
+
+| Tema              | Decisione                                                                                         |
+| ----------------- | ------------------------------------------------------------------------------------------------- |
+| Tastiera          | 3 tasti per gatto: sinistra, destra e smash (= il tasto principale di Pappa); su e giù previsti   |
+| Controller        | Supportati in Scaccia, in Pappa, nei menu e nell'hub                                              |
+| Touch             | Striscia da trascinare (il cuscino segue il dito) e pulsante SMASH a parte                        |
+| Camera            | Più inclinata (75°): gioco simile da tutti e quattro i lati                                       |
+| Lati              | Primo umano in basso, secondo in alto, poi ai lati                                                |
+| Punti             | Minimo 0                                                                                          |
+| Gol               | Il gioco continua sempre; reazioni dei gatti di Pappa (cacchina a chi subisce, festa a chi segna) |
+| Palline tra loro  | Non si scontrano                                                                                  |
+| Limite di tempo   | Opzione (spento di base), 3 minuti, poi spareggio se in testa sono pari                           |
+| Barriera          | Cuscino a salsicciotto                                                                            |
+| Punti per vincere | 3 / 5 / 7, predefinito 5                                                                          |
+
 ## Decise (2026-11-11)
 
 | Tema                 | Decisione                                                                                                                    |

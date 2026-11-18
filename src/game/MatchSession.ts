@@ -6,12 +6,14 @@ import type { PlayerSlot } from '../config/controls';
 import type { Controller, KeyPair } from '../config/settings';
 import { tuning, type Difficulty } from '../config/tuning';
 import { createMatchConfig } from '../core/matchConfig';
-import { MatchMachine, type TimedInput } from '../core/MatchMachine';
+import { MatchMachine } from '../core/MatchMachine';
+import type { FrameInput } from '../input/InputSource';
 import { Rng } from '../core/Rng';
 import { Hud } from '../render/Hud';
 import type { PixelRenderer } from '../render/PixelRenderer';
 import type { MatchScene } from '../scenes/MatchScene';
 import { GameClock } from './GameClock';
+import type { AudioStatus, GameSession } from './GameDef';
 import { MatchDriver } from './MatchDriver';
 
 export interface SessionOptions {
@@ -27,7 +29,7 @@ export interface SessionOptions {
   showHud: boolean;
 }
 
-export interface SessionDeps {
+export interface PappaSessionDeps {
   container: HTMLElement;
   slots: readonly PlayerSlot[];
   scene: MatchScene;
@@ -36,10 +38,10 @@ export interface SessionDeps {
 }
 
 /**
- * Una partita: MatchMachine + CPU + HUD + regia sonora, con orologio
- * che si può mettere in pausa. La scena 3D è condivisa tra le sessioni.
+ * Una partita di Pappa Reaction: MatchMachine + CPU + HUD + regia sonora, con
+ * orologio che si può mettere in pausa. La scena 3D è condivisa tra le sessioni.
  */
-export class MatchSession {
+export class MatchSession implements GameSession {
   readonly clock = new GameClock();
   machine!: MatchMachine;
   seed = 0;
@@ -48,7 +50,7 @@ export class MatchSession {
   private readonly gameAudio: GameAudio;
 
   constructor(
-    private readonly deps: SessionDeps,
+    private readonly deps: PappaSessionDeps,
     readonly options: SessionOptions,
     realNow: number,
   ) {
@@ -98,6 +100,16 @@ export class MatchSession {
     return this.machine.phase === 'final';
   }
 
+  get players() {
+    return this.options.players;
+  }
+
+  /** Pulsanti touch spenti da storditi e in panchina. */
+  controlsEnabled(player: number, realNow: number): boolean {
+    const st = this.machine.players[player];
+    return st.active && this.now(realNow) >= st.stunnedUntil;
+  }
+
   /** Tempo di gioco (si ferma in pausa). */
   now(realNow: number): number {
     return this.clock.now(realNow);
@@ -116,7 +128,8 @@ export class MatchSession {
   }
 
   /** Un frame: input → logica → animazioni → rendering. */
-  frame(realNow: number, inputs: readonly TimedInput[]): void {
+  frame(realNow: number, input: FrameInput): void {
+    const inputs = input.presses;
     const { scene, pixel } = this.deps;
     const now = this.clock.now(realNow);
 
@@ -145,7 +158,7 @@ export class MatchSession {
     }
   }
 
-  setAudioStatus(status: 'locked' | 'on' | 'off'): void {
+  setAudioStatus(status: AudioStatus): void {
     this.hud?.setAudioStatus(status);
   }
 

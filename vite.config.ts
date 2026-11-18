@@ -3,7 +3,11 @@ import { defineConfig } from 'vitest/config';
 import { cacheIdFor, precacheList, serviceWorkerSource } from './src/platform/serviceWorker';
 
 /** Pagine della build: l'hub e una per ogni gioco pronto (sottopercorso con i suoi parametri). */
-const PAGES = { hub: 'index.html', pappa: 'pappa/index.html' };
+const PAGES = {
+  hub: 'index.html',
+  pappa: 'pappa/index.html',
+  scaccia: 'scaccia/index.html',
+};
 
 /** Genera dist/sw.js con l'elenco dei file della build (PWA offline, M10). */
 function serviceWorker(): Plugin {

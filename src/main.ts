@@ -53,6 +53,10 @@ function boot(root: HTMLElement): void {
     void import('./games/pappa/startPappa').then(({ startPappa }) =>
       startPappa({ root, pixel, params, store: safeStorage(), hubUrl, debug }),
     );
+  } else if (route.game === 'scaccia') {
+    void import('./games/scaccia/startScaccia').then(({ startScaccia }) =>
+      startScaccia({ root, pixel, params, store: safeStorage(), hubUrl, debug }),
+    );
   } else {
     // Le scritte delle schede si disegnano col font del gioco: prima va caricato.
     const font = document.fonts?.load("700 16px 'Fredoka'").catch(() => []);

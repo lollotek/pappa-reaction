@@ -705,6 +705,57 @@ body.touch-mode .touch-only {
   opacity: 0.35;
   filter: grayscale(0.8);
 }
+/* Striscia da trascinare (Scaccia la palla): il cuscino segue il dito. */
+.touch-move {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--badge) 35%, transparent);
+  justify-content: flex-end;
+  padding-bottom: 4px;
+}
+.touch-move .touch-label {
+  font-size: 0.7em;
+  opacity: 0.85;
+  pointer-events: none;
+}
+.touch-move.held {
+  transform: none;
+  background: color-mix(in srgb, var(--badge) 50%, transparent);
+}
+.touch-knob {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1.9em;
+  height: 1.9em;
+  border: 3px solid #000;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--badge) 75%, #fff);
+  transform: translate(-50%, -60%);
+  pointer-events: none;
+}
+.touch-move:not(.held) .touch-knob {
+  left: 50% !important;
+  opacity: 0.6;
+}
+.hud-round.hurry {
+  color: #ff6b5a;
+}
+/* Scaccia la palla: il lato in alto è in gioco, le scritte stanno accanto alla pausa. */
+body.game-scaccia.touch-mode .hud-round {
+  top: calc(var(--sat) + 8px);
+  left: calc(50% + 52px);
+  transform: none;
+  font-size: 15px;
+}
+body.game-scaccia.touch-mode .hud-audio {
+  top: calc(var(--sat) + 10px);
+  left: auto;
+  right: calc(50% + 52px);
+  transform: none;
+}
+body.game-scaccia .hud .hud-banner {
+  top: 40%;
+}
 
 .touch-pause {
   position: absolute;

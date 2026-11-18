@@ -4,17 +4,22 @@ import type { PlayerSlot } from '../config/controls';
 import { keyLabel } from '../config/keyLabel';
 import {
   DIFFICULTIES,
-  ROUND_OPTIONS,
   assignKey,
   defaultSettings,
   saveSettings,
-  type KeyAction,
   type KeyValueStore,
   type Settings,
 } from '../config/settings';
-import { MergedInput, TouchInput, type InputSource } from '../input/InputSource';
+import { Gamepads, type PadFrame } from '../input/Gamepads';
+import {
+  MergedInput,
+  TouchInput,
+  type Axis,
+  type FrameInput,
+  type InputSource,
+} from '../input/InputSource';
 import type { Keyboard } from '../input/Keyboard';
-import { touchLayout, type Insets } from '../input/touchLayout';
+import { stripLayout, touchLayout, type Insets } from '../input/touchLayout';
 import { BackButton } from '../platform/BackButton';
 import { Device, installMode } from '../platform/Device';
 import { diagnosticsLine } from '../platform/diagnostics';
@@ -27,14 +32,13 @@ import {
   touchHumans,
 } from '../platform/touchMode';
 import type { PixelRenderer } from '../render/PixelRenderer';
-import type { MatchScene } from '../scenes/MatchScene';
 import { ButtonTest } from '../ui/ButtonTest';
 import { KeyTest } from '../ui/KeyTest';
 import { MenuModel, type MenuItem, type MenuKey } from '../ui/MenuModel';
 import { MenuView } from '../ui/MenuView';
 import { PauseButton } from '../ui/PauseButton';
 import { TouchButtons } from '../ui/TouchButtons';
-import { MatchSession, type SessionDeps, type SessionOptions } from './MatchSession';
+import type { GameDef, GameSession, SessionDeps, SessionRequest, SettingsAccess } from './GameDef';
 
 type Mode = 'menu' | 'keytest' | 'match' | 'paused';
 
@@ -53,10 +57,11 @@ const MENU_KEYS: Record<string, MenuKey> = {
 /** Pausa prima che la demo dietro al menu ricominci dopo la classifica. */
 const DEMO_RESTART_MS = 4000;
 
-export interface AppDeps {
+export interface AppDeps<S extends GameSession> {
   container: HTMLElement;
   slots: readonly PlayerSlot[];
-  scene: MatchScene;
+  /** Il minigioco: partite, voci di menu e testi propri. */
+  game: GameDef<S>;
   pixel: PixelRenderer;
   audio: AudioEngine;
   keyboard: Keyboard;
@@ -67,14 +72,15 @@ export interface AppDeps {
 }
 
 /**
- * Flusso di Pappa Reaction: titolo e menu (con una partita dimostrativa tra CPU
- * sullo sfondo), partita, pausa, classifica e rivincita.
+ * Flusso comune dei minigiochi: titolo e menu (con una partita dimostrativa tra
+ * CPU sullo sfondo), partita, pausa, classifica e rivincita. Tastiera, tocco e
+ * controller; quel che cambia da un gioco all'altro sta nel suo `GameDef`.
  */
-export class App {
+export class App<S extends GameSession = GameSession> {
   private mode: Mode = 'menu';
   private settings: Settings;
-  private session: MatchSession | null = null;
-  private demo: MatchSession | null = null;
+  private session: S | null = null;
+  private demo: S | null = null;
   private demoFinishedAt: number | null = null;
   private menu: MenuModel | null = null;
   private readonly view: MenuView;
@@ -82,6 +88,7 @@ export class App {
   private readonly logo: HTMLElement;
   /** Tastiera e pulsanti touch insieme. */
   private readonly input: InputSource;
+  private readonly gamepads = new Gamepads();
   private readonly touch = new TouchInput();
   private readonly touchButtons: TouchButtons;
   private readonly pauseButton: PauseButton;
@@ -102,12 +109,16 @@ export class App {
   /** L'audio era già sbloccato prima di questo tocco (vedi indicatore audio). */
   private audioWasUnlocked = false;
 
-  constructor(private readonly deps: AppDeps) {
+  constructor(private readonly deps: AppDeps<S>) {
     this.settings = deps.settings;
     this.input = new MergedInput([deps.keyboard, this.touch]);
     this.view = new MenuView(deps.container, () => this.afterMenuChange());
     this.keyTest = new KeyTest(deps.container, deps.slots, () => this.showControls());
-    this.touchButtons = new TouchButtons(deps.container, deps.slots);
+    this.touchButtons = new TouchButtons(
+      deps.container,
+      deps.slots,
+      deps.game.touchControls === 'strip' ? 'SMASH' : 'SCATTO',
+    );
     this.touchButtons.onPress = (p, a, t) => {
       if (this.mode === 'match') this.touch.press(p, a, t);
     };
@@ -129,7 +140,7 @@ export class App {
 
     this.logo = document.createElement('div');
     this.logo.className = 'title-logo';
-    this.logo.innerHTML = '<h1>Pappa Reaction</h1><p>Priamo Stadium</p>';
+    this.logo.innerHTML = `<h1>${deps.game.title}</h1><p>Priamo Stadium</p>`;
     deps.container.appendChild(this.logo);
 
     this.applyAudioSettings();
@@ -151,7 +162,7 @@ export class App {
   }
 
   /** Partita attiva (o demo), per il debug. */
-  get currentSession(): MatchSession | null {
+  get currentSession(): S | null {
     return this.session ?? this.demo;
   }
 
@@ -161,27 +172,79 @@ export class App {
   }
 
   /** Avvio diretto in partita (parametri URL di sviluppo). */
-  startDirect(overrides: Partial<SessionOptions>): void {
+  startDirect(overrides: Partial<SessionRequest>): void {
     this.startMatch(overrides);
   }
 
   frame(realNow: number): void {
-    const inputs = this.input.drain();
+    const pad = this.gamepads.poll(realNow);
+    this.onPad(pad);
+    const input = this.frameInput(pad);
     // In verticale non si gioca: pausa (l'avviso "ruota il dispositivo" copre lo schermo).
     if (this.portrait?.matches) this.autoPauseTouch();
     this.updateTouchUi(realNow);
     if (this.session) {
-      this.session.frame(realNow, this.mode === 'match' ? inputs : []);
+      this.session.frame(realNow, this.mode === 'match' ? input : EMPTY);
       return;
     }
     // Menu: la demo gira sullo sfondo; i tasti dei gatti non contano.
     if (!this.demo) this.demo = this.createDemo(realNow);
-    this.demo.frame(realNow, []);
+    this.demo.frame(realNow, EMPTY);
     if (this.demo.finished) {
       this.demoFinishedAt ??= realNow;
       if (realNow - this.demoFinishedAt > DEMO_RESTART_MS) {
         this.demo.restart(realNow);
         this.demoFinishedAt = null;
+      }
+    }
+  }
+
+  /**
+   * Comandi del frame: tastiera, tocco e controller. Il k-esimo controller va
+   * al k-esimo gatto umano della partita.
+   */
+  private frameInput(pad: PadFrame): FrameInput {
+    const presses = this.input.drain();
+    const humans = (this.session?.players ?? []).flatMap((c, i) => (c === 'human' ? [i] : []));
+    const fromPads = Gamepads.toInputs(pad, humans);
+    const clamp = (v: number) => Math.max(-1, Math.min(1, v));
+    const axes = this.deps.slots.map((_, p): Axis => {
+      const k = this.deps.keyboard.axis(p);
+      const padIndex = humans.indexOf(p);
+      const g = padIndex >= 0 ? this.gamepads.axis(padIndex) : { x: 0, y: 0 };
+      return { x: clamp(k.x + g.x), y: clamp(k.y + g.y) };
+    });
+    return {
+      presses: fromPads.length ? [...presses, ...fromPads].sort((a, b) => a.t - b.t) : presses,
+      axes,
+      strips: this.deps.slots.map((_, p) => this.touchButtons.stripValue(p)),
+    };
+  }
+
+  /** Controller nei menu: frecce, A conferma, B indietro, START pausa/riprendi. */
+  private onPad(pad: PadFrame): void {
+    if (pad.menu.length === 0 && !pad.start) return;
+    if (this.mode === 'keytest') {
+      if (pad.menu.includes('back')) this.showControls();
+      return;
+    }
+    if (this.menu && (this.mode === 'menu' || this.mode === 'paused')) {
+      if (this.menu.capturing) {
+        if (pad.menu.includes('back') && this.menu.press('back')) this.afterMenuChange();
+        return;
+      }
+      if (pad.start && this.mode === 'paused') return this.resume();
+      const keys: MenuKey[] = pad.start ? [...pad.menu, 'enter'] : pad.menu;
+      // Una voce può cambiare schermata: i comandi dopo vanno al menu nuovo.
+      for (const key of keys) if (this.menu?.press(key)) this.afterMenuChange();
+      return;
+    }
+    if (this.mode === 'match' && this.session) {
+      if (this.session.finished) {
+        if (pad.menu.includes('enter') || pad.start) this.session.restart(performance.now());
+        else if (pad.menu.includes('back')) this.quitToTitle();
+      } else if (pad.start) {
+        this.pause();
       }
     }
   }
@@ -229,19 +292,17 @@ export class App {
 
   // ---------------------------------------------------------------- partita
 
-  private startMatch(overrides: Partial<SessionOptions> = {}): void {
+  private startMatch(overrides: Partial<SessionRequest> = {}): void {
     this.demo?.dispose();
     this.demo = null;
     this.closeMenus();
     const s = this.settings;
-    this.session = new MatchSession(
+    this.session = this.deps.game.createSession(
       this.sessionDeps(this.deps.audio),
       {
         players: this.touchMode ? limitHumans(s.players, MAX_TOUCH_HUMANS) : s.players,
         difficulty: s.difficulty,
-        roundCount: s.roundCount,
-        keys: s.keys,
-        trickyReferee: s.trickyReferee,
+        settings: s,
         screenEffects: s.screenEffects,
         showHud: true,
         ...overrides,
@@ -298,15 +359,13 @@ export class App {
     this.showTitle();
   }
 
-  private createDemo(realNow: number): MatchSession {
-    return new MatchSession(
+  private createDemo(realNow: number): S {
+    return this.deps.game.createSession(
       this.sessionDeps(silentAudio),
       {
         players: this.deps.slots.map(() => 'cpu'),
         difficulty: 'normale',
-        roundCount: 5,
-        keys: this.settings.keys,
-        trickyReferee: false,
+        settings: this.settings,
         screenEffects: false,
         showHud: false,
       },
@@ -315,9 +374,15 @@ export class App {
   }
 
   private sessionDeps(audio: AudioOut): SessionDeps {
-    const { container, slots, scene, pixel } = this.deps;
-    return { container, slots, scene, pixel, audio };
+    const { container, slots, pixel } = this.deps;
+    return { container, slots, pixel, audio };
   }
+
+  /** Impostazioni per le voci di menu dei giochi. */
+  private readonly access: SettingsAccess = {
+    get: () => this.settings,
+    update: (patch) => this.update(patch),
+  };
 
   // ---------------------------------------------------------------- schermate
 
@@ -433,13 +498,7 @@ export class App {
         get: () => DIFFICULTIES.indexOf(this.settings.difficulty),
         set: (v) => this.update({ difficulty: DIFFICULTIES[v] }),
       },
-      {
-        kind: 'choice',
-        label: 'Round',
-        options: ROUND_OPTIONS.map(String),
-        get: () => ROUND_OPTIONS.indexOf(this.settings.roundCount as 3 | 5 | 7),
-        set: (v) => this.update({ roundCount: ROUND_OPTIONS[v] }),
-      },
+      ...this.deps.game.setupItems(this.access),
       {
         kind: 'action',
         label: 'Inizia!',
@@ -475,16 +534,16 @@ export class App {
           ],
           () => this.showTitle(),
         ),
-        TOUCH_CONTROLS_HTML,
+        this.deps.game.touchControlsHtml + TOUCH_KEYBOARD_NOTE,
       );
       return;
     }
     const items: MenuItem[] = [];
     this.deps.slots.forEach((slot, i) => {
-      (['dash', 'fake'] as KeyAction[]).forEach((action) =>
+      this.deps.game.keyActions.forEach(({ action, label }) =>
         items.push({
           kind: 'key',
-          label: `${slot.name} · ${action === 'dash' ? 'scatto' : 'finta'}`,
+          label: `${slot.name} · ${label}`,
           get: () => this.settings.keys[i][action],
           capture: (code) => {
             const r = assignKey(this.settings.keys, i, action, code);
@@ -507,7 +566,8 @@ export class App {
     );
     this.openMenu(
       new MenuModel('Comandi', items, () => this.showTitle()),
-      '<p class="menu-text">INVIO su un tasto e premi quello nuovo. Se è già usato, i due si scambiano.</p>',
+      '<p class="menu-text">INVIO su un tasto e premi quello nuovo. Se è già usato, i due si scambiano. ' +
+        'Con i controller: il primo comanda il primo gatto umano, il secondo il secondo…</p>',
       'menu-wide',
     );
   }
@@ -518,10 +578,11 @@ export class App {
     this.mode = 'keytest';
     this.backButton.arm();
     if (this.touchMode) this.buttonTest.show();
-    else this.keyTest.show(this.settings.keys);
+    else this.keyTest.show(this.settings.keys, this.deps.game.keyActions);
   }
 
   private showOptions(): void {
+    const gameOptions = this.deps.game.optionItems(this.access);
     const items: MenuItem[] = [
       {
         kind: 'slider',
@@ -546,13 +607,7 @@ export class App {
         get: () => (this.deps.audio.muted ? 1 : 0),
         set: () => this.deps.audio.toggleMute(),
       },
-      {
-        kind: 'choice',
-        label: 'Arbitro',
-        options: ['normale', 'furbo'],
-        get: () => (this.settings.trickyReferee ? 1 : 0),
-        set: (v) => this.update({ trickyReferee: v === 1 }),
-      },
+      ...gameOptions.items,
       {
         kind: 'choice',
         label: 'Lampi e scosse',
@@ -583,10 +638,7 @@ export class App {
       },
       // Indietro prima delle note: su due colonne sta accanto a "Schermo intero".
       { kind: 'action', label: 'Indietro', onSelect: () => this.showTitle() },
-      {
-        kind: 'info',
-        label: 'Arbitro furbo: alle finte la musica fa un singhiozzo.',
-      },
+      ...gameOptions.notes.map((label): MenuItem => ({ kind: 'info', label })),
       {
         kind: 'info',
         label: 'Pulsanti touch "auto": compaiono al primo tocco.',
@@ -615,7 +667,10 @@ export class App {
         [{ kind: 'action', label: 'Indietro', onSelect: () => this.showTitle() }],
         () => this.showTitle(),
       ),
-      () => `<div class="menu-rules">${RULES_HTML}${this.touchMode ? RULES_TOUCH_HTML : ''}</div>`,
+      () =>
+        `<div class="menu-rules">${this.deps.game.rulesHtml}${
+          this.touchMode ? this.deps.game.rulesTouchHtml : ''
+        }</div>`,
       'menu-wide',
     );
   }
@@ -754,14 +809,15 @@ export class App {
     const playing =
       this.touchMode && this.mode === 'match' && session !== null && !session.finished;
     const testing = this.mode === 'keytest' && this.buttonTest.visible;
-    const humans = testing ? [0, 1] : playing ? touchHumans(session.options.players) : [];
+    const humans = testing ? [0, 1] : playing ? touchHumans(session.players) : [];
     const w = this.deps.container.clientWidth;
     const h = this.deps.container.clientHeight;
     const key = `${playing}|${testing}|${humans.join(',')}|${w}x${h}`;
     if (key !== this.touchUiKey) {
       this.touchUiKey = key;
       if (playing || testing) {
-        this.touchButtons.setLayout(touchLayout(w, h, humans, safeInsets()));
+        const layout = this.deps.game.touchControls === 'strip' ? stripLayout : touchLayout;
+        this.touchButtons.setLayout(layout(w, h, humans, safeInsets()));
         this.touchButtons.show();
       } else {
         this.touchButtons.hide();
@@ -772,12 +828,7 @@ export class App {
     }
     if (playing) {
       // Pulsanti spenti da storditi e in panchina.
-      const m = session.machine;
-      const now = session.now(realNow);
-      for (const p of humans) {
-        const st = m.players[p];
-        this.touchButtons.setEnabled(p, st.active && now >= st.stunnedUntil);
-      }
+      for (const p of humans) this.touchButtons.setEnabled(p, session.controlsEnabled(p, realNow));
     }
   }
 
@@ -805,52 +856,37 @@ export class App {
     const humans = touchHumans(this.settings.players).map((i) => this.deps.slots[i]);
     const tag = (s: PlayerSlot) => `<span style="--accent:${s.badgeColor}">${s.name}</span>`;
     if (humans.length === 0) return '<p class="menu-text">Solo CPU: guardi la partita.</p>';
-    if (humans.length === 1) {
-      return `<p class="menu-keys">${tag(humans[0])} SCATTO a destra · FINTA a sinistra</p>`;
-    }
-    return `<p class="menu-keys">${tag(humans[0])} pulsanti a sinistra · ${tag(humans[1])} a destra</p>
-      <p class="menu-text">Al massimo 2 giocatori con i pulsanti touch.</p>`;
+    return this.deps.game.touchHumansHtml(humans.map(tag));
   }
 
   private humanKeysHtml(): string {
     if (this.touchMode) return this.humanTouchHtml();
+    const actions = this.deps.game.keyActions;
     const humans = this.deps.slots.flatMap((slot, i) =>
       this.settings.players[i] === 'human'
         ? [
-            `<span style="--accent:${slot.badgeColor}">${slot.name} <kbd>${keyLabel(this.settings.keys[i].dash)}</kbd> <kbd>${keyLabel(this.settings.keys[i].fake)}</kbd></span>`,
+            `<span style="--accent:${slot.badgeColor}">${slot.name} ${actions
+              .map(({ action }) => `<kbd>${keyLabel(this.settings.keys[i][action]) || '–'}</kbd>`)
+              .join(' ')}</span>`,
           ]
         : [],
     );
+    const pads = this.gamepads.count;
+    const padNote = pads
+      ? `<p class="menu-text">${pads} controller: ${
+          pads === 1 ? 'comanda il primo gatto umano' : 'comandano i primi gatti umani, in ordine'
+        }.</p>`
+      : '';
     return humans.length
-      ? `<p class="menu-keys">${humans.join('')}</p>`
+      ? `<p class="menu-keys">${humans.join('')}</p>${padNote}`
       : '<p class="menu-text">Solo CPU: guardi la partita.</p>';
   }
 }
 
-const TOUCH_CONTROLS_HTML = `
-<p class="menu-text">Si gioca con i pulsanti ai lati dello schermo, in orizzontale.
-  Da soli: <b>SCATTO</b> sotto il pollice destro, <b>FINTA</b> sotto il sinistro.
-  In due: una colonna di pulsanti per lato.</p>
-<p class="menu-text">Per cambiare i tasti della tastiera metti <b>Pulsanti touch: no</b> in Opzioni.</p>`;
+const TOUCH_KEYBOARD_NOTE =
+  '<p class="menu-text">Per cambiare i tasti della tastiera metti <b>Pulsanti touch: no</b> in Opzioni.</p>';
 
-const RULES_TOUCH_HTML = `
-  <p><b>Su telefono e tablet.</b> Tieni il dispositivo in orizzontale. Da soli: SCATTO a destra,
-    FINTA a sinistra. In due: ognuno ha una colonna di pulsanti sul suo lato.
-    Per la pausa tieni premuto il pulsante in alto al centro.</p>`;
-
-const RULES_HTML = `
-  <p><b>Lo scopo.</b> I gatti girano attorno alla ciotola. Quando la mano alza il coperchio
-    e la musica si ferma, premi <b>SCATTO</b>: il più veloce prende la pappa.</p>
-  <p><b>La pappa.</b> Crocchette 1 punto, tonno 2, salmone 3, gamberetto d'oro 5.
-    Se due gatti sono più veloci entro 3 centesimi, se la dividono.</p>
-  <p><b>Falsa partenza.</b> Se scatti con il coperchio chiuso sbatti contro il coperchio
-    e resti stordito per 1,5 secondi.</p>
-  <p><b>Le finte.</b> A volte la mano solleva appena il coperchio: è una finta, e la musica
-    continua! Con <b>FINTA</b> puoi far finta di scattare per ingannare gli altri.</p>
-  <p><b>La cacchetta.</b> Se sotto il coperchio c'è la cacchetta, <b>non scattare</b>:
-    chi scatta salta il round dopo (all'ultimo round perde 1 punto).</p>
-  <p><b>La partita.</b> Vince chi ha più punti dopo l'ultimo round. In caso di parità
-    si va allo spareggio tra i primi.</p>`;
+const EMPTY: FrameInput = { presses: [], axes: [], strips: [] };
 
 /** Aree sicure dello schermo (notch, angoli arrotondati) lette dal CSS. */
 function safeInsets(): Insets {

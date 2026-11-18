@@ -1,6 +1,6 @@
 import type { PlayerSlot } from '../config/controls';
 import { keyLabel } from '../config/keyLabel';
-import type { KeyPair } from '../config/settings';
+import type { KeyAction, KeyPair } from '../config/settings';
 import { onTap } from './tap';
 
 /**
@@ -12,6 +12,7 @@ export class KeyTest {
   private readonly held = new Set<string>();
   private best = 0;
   private keys: readonly KeyPair[] = [];
+  private actions: readonly { action: KeyAction; label: string }[] = [];
   private active = false;
 
   constructor(
@@ -45,8 +46,9 @@ export class KeyTest {
     });
   }
 
-  show(keys: readonly KeyPair[]): void {
+  show(keys: readonly KeyPair[], actions: readonly { action: KeyAction; label: string }[]): void {
     this.keys = keys;
+    this.actions = actions;
     this.held.clear();
     this.best = 0;
     this.active = true;
@@ -60,7 +62,9 @@ export class KeyTest {
   }
 
   private countGameKeys(): number {
-    return this.keys.flatMap((k) => [k.dash, k.fake]).filter((c) => this.held.has(c)).length;
+    return this.keys
+      .flatMap((k) => this.actions.map(({ action }) => k[action]))
+      .filter((c) => c !== '' && this.held.has(c)).length;
   }
 
   private render(): void {
@@ -71,14 +75,14 @@ export class KeyTest {
         (slot, i) => `
         <div class="keytest-row" style="--accent:${slot.badgeColor}">
           <span class="keytest-name">${slot.name}</span>
-          ${cell(this.keys[i].dash, 'scatto')}${cell(this.keys[i].fake, 'finta')}
+          ${this.actions.map(({ action, label }) => cell(this.keys[i][action], label)).join('')}
         </div>`,
       )
       .join('');
     this.root.innerHTML = `
       <h2>Prova tasti</h2>
       <p class="menu-text">Premete i tasti tutti insieme: se un tasto premuto non si accende,
-        la tastiera non regge quella combinazione. Provate i tasti di scatto di tutti
+        la tastiera non regge quella combinazione. Provate i tasti di tutti
         contemporaneamente.</p>
       <div class="keytest-grid">${rows}</div>
       <p class="menu-message">Tasti di gioco premuti ora: ${this.countGameKeys()} · massimo insieme: ${this.best}</p>

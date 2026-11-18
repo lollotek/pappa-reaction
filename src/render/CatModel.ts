@@ -10,7 +10,18 @@ import type { CatBreed } from '../config/controls';
  */
 
 export type CatPose =
-  'idle' | 'run' | 'dash' | 'eat' | 'bonk' | 'stunned' | 'yuck' | 'celebrate' | 'sad' | 'sit';
+  | 'idle'
+  | 'run'
+  | 'dash'
+  | 'eat'
+  | 'bonk'
+  | 'stunned'
+  | 'yuck'
+  | 'celebrate'
+  | 'sad'
+  | 'sit'
+  | 'swat'
+  | 'ready';
 
 export interface CatLook {
   breed: CatBreed;
@@ -357,6 +368,35 @@ export class CatModel {
         this.sitDown();
         this.tailWave(s * 2, 0.1, 0.15);
         break;
+      case 'ready': {
+        // Acquattato, pronto a scattare di lato: passettini se si muove (u = velocità 0..1).
+        const f = s * 18;
+        this.body.position.y -= 0.06;
+        this.body.rotation.x = 0.08;
+        for (const leg of this.legs) {
+          const diagonal = leg.front === (leg.side === 1) ? 1 : -1;
+          leg.pivot.rotation.z = Math.sin(f) * 0.45 * u * diagonal;
+        }
+        this.body.position.y += Math.abs(Math.sin(f)) * 0.04 * u;
+        this.earsBack(0.15);
+        this.tailWave(s * 3, 0.35, 0.25);
+        break;
+      }
+      case 'swat': {
+        // Zampata: la zampa anteriore destra si alza e colpisce in avanti (u = ms dall'inizio).
+        const k = Math.min(1, u / 240);
+        const lift = Math.sin(k * Math.PI);
+        this.body.rotation.x = 0.12 + lift * 0.1;
+        this.body.position.z = lift * 0.08;
+        for (const leg of this.legs) {
+          if (leg.front && leg.side === 1) leg.pivot.rotation.x = -1.9 * lift;
+          else if (leg.front) leg.pivot.rotation.x = 0.2 * lift;
+        }
+        this.head.rotation.x = -0.15 * lift;
+        this.earsBack(0.5 * lift);
+        this.tailWave(s * 6, 0.5, 0.2);
+        break;
+      }
     }
 
     // L'ombra resta a terra anche durante salti e rimbalzi.

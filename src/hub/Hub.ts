@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { playerSlots } from '../config/controls';
 import { GAMES } from '../games/registry';
+import { Gamepads } from '../input/Gamepads';
 import { openGame } from '../platform/navigation';
 import { gamePath } from '../platform/routes';
 import type { PixelRenderer } from '../render/PixelRenderer';
@@ -21,6 +22,7 @@ export class Hub {
   private opening = false;
   private message = '';
   private sawTouch = false;
+  private readonly gamepads = new Gamepads();
 
   constructor(
     root: HTMLElement,
@@ -62,6 +64,7 @@ export class Hub {
     this.scene3d.fit();
     this.renderInfo();
     const loop = (now: number) => {
+      this.onPad(now);
       this.scene3d.update(now);
       this.pixel.render(this.scene3d.scene, this.scene3d.camera);
       if (this.debug?.visible()) {
@@ -98,6 +101,19 @@ export class Hub {
       }
     }
     e.preventDefault();
+  }
+
+  /** Controller: levetta o croce per scegliere, A o START per giocare. */
+  private onPad(now: number): void {
+    const pad = this.gamepads.poll(now);
+    if (this.opening) return;
+    const n = GAMES.length;
+    for (const key of pad.menu) {
+      if (key === 'left') this.select((this.scene3d.selected - 1 + n) % n);
+      else if (key === 'right') this.select((this.scene3d.selected + 1) % n);
+      else if (key === 'enter') this.activate();
+    }
+    if (pad.start) this.activate();
   }
 
   private pick(e: PointerEvent): number | null {

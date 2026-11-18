@@ -251,8 +251,9 @@ La rimappatura dei tasti resta disponibile solo con la tastiera.
 Pappa Reaction è il primo di una serie di minigiochi con gli stessi quattro gatti, riuniti sotto il nome **Priamo Stadium** (anche il nome dell'app installata).
 
 - **Hub**: scena 3D su fondo nero con una scheda per gioco; i quattro gatti, due per lato, guardano la scheda selezionata. Frecce (o A/D) per scegliere, INVIO/SPAZIO o un tocco per giocare; i tasti 1–9 aprono subito il gioco corrispondente. Il gioco scelto vola verso la camera e si apre la sua pagina.
-- **Schede "prossimamente"**: si vedono ma non si aprono (la scheda scuote la testa). Per ora c'è **Scaccia la palla**.
+- **Schede "prossimamente"**: si vedono ma non si aprono (la scheda scuote la testa). Al momento nessuna: **Scaccia la palla** è giocabile ([GDD di Scaccia la palla](GDD_SCACCIA.md)).
 - **Indirizzi**: l'hub è la pagina principale, ogni gioco ha un sottopercorso (`/pappa/`) con i suoi parametri URL.
 - **Ritorno**: a fine partita "Torna al menu" porta al titolo del gioco; dal titolo **Torna all'hub** (o ESC, o l'Indietro di Android). Sull'hub l'Indietro di Android esce dall'app.
-- **Impostazioni comuni**: volumi, tasti dei gatti, pulsanti touch e schermo intero valgono per tutti i giochi.
+- **Impostazioni comuni**: volumi, tasti dei gatti, pulsanti touch e schermo intero valgono per tutti i giochi. I tasti di ogni gatto sono scatto, finta e le direzioni; ogni gioco mostra in Comandi solo quelli che usa.
+- **Controller**: in tutti i giochi e nei menu (A conferma/scatto, B indietro/finta, START pausa); il k-esimo controller comanda il k-esimo gatto umano.
 - Per ora niente statistiche o trofei condivisi tra i giochi.

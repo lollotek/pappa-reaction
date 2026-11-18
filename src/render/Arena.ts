@@ -67,19 +67,27 @@ export class Arena {
   /** Galleggianti che dondolano sull'acqua (solo balcone). */
   private readonly floaters: { obj: THREE.Object3D; phase: number }[] = [];
 
-  constructor(readonly map: ArenaMap = 'salotto') {
+  /**
+   * `bare`: solo l'ambiente (pavimento, parete, decori), senza tappeto rotondo,
+   * ciotola, coperchio e mano: per gli altri minigiochi nella stessa casa.
+   */
+  constructor(
+    readonly map: ArenaMap = 'salotto',
+    readonly bare = false,
+  ) {
     if (map === 'balcone') this.buildBalcony();
     else if (map === 'giardino') this.buildGarden();
     else this.buildRoom();
-    this.buildBowl();
-    this.buildLid();
-    this.buildHand();
-
-    this.contents = createBowlContents();
-    for (const content of this.contents.values()) {
-      content.position.y = FOOD_Y;
-      content.visible = false;
-      this.group.add(content);
+    this.contents = bare ? new Map() : createBowlContents();
+    if (!bare) {
+      this.buildBowl();
+      this.buildLid();
+      this.buildHand();
+      for (const content of this.contents.values()) {
+        content.position.y = FOOD_Y;
+        content.visible = false;
+        this.group.add(content);
+      }
     }
 
     if (map === 'balcone') this.buildBalconyDecor();
@@ -149,7 +157,8 @@ export class Arena {
       new THREE.MeshLambertMaterial({ map: rugTexture(), transparent: true }),
     );
     rug.rotation.x = -Math.PI / 2;
-    this.group.add(floor, wall, rug);
+    this.group.add(floor, wall);
+    if (!this.bare) this.group.add(rug);
   }
 
   private buildGarden(): void {

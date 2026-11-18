@@ -29,9 +29,9 @@ export const GAMES: readonly GameInfo[] = [
   {
     id: 'scaccia',
     title: ['Scaccia', 'la palla'],
-    tagline: 'Un nuovo gioco per i quattro gatti.',
-    players: 'Prossimamente',
-    status: 'soon',
+    tagline: 'Difendi la cuccia e rimanda le palline agli altri gatti… con lo smash!',
+    players: '1–4 giocatori',
+    status: 'ready',
     colors: { bg: '#3f7a52', dark: '#24452f', ink: '#ffe066' },
   },
 ];
