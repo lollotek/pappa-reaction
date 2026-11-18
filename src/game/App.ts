@@ -19,7 +19,7 @@ import {
   type InputSource,
 } from '../input/InputSource';
 import type { Keyboard } from '../input/Keyboard';
-import { stripLayout, touchLayout, type Insets } from '../input/touchLayout';
+import { singleLayout, stripLayout, touchLayout, type Insets } from '../input/touchLayout';
 import { BackButton } from '../platform/BackButton';
 import { Device, installMode } from '../platform/Device';
 import { diagnosticsLine } from '../platform/diagnostics';
@@ -56,6 +56,10 @@ const MENU_KEYS: Record<string, MenuKey> = {
 
 /** Pausa prima che la demo dietro al menu ricominci dopo la classifica. */
 const DEMO_RESTART_MS = 4000;
+
+/** Scritta sul pulsante principale e posizione dei comandi touch, per tipo di gioco. */
+const TOUCH_LABEL = { buttons: 'SCATTO', strip: 'SMASH', single: 'ZAMPATA' } as const;
+const TOUCH_LAYOUT = { buttons: touchLayout, strip: stripLayout, single: singleLayout } as const;
 
 export interface AppDeps<S extends GameSession> {
   container: HTMLElement;
@@ -117,7 +121,7 @@ export class App<S extends GameSession = GameSession> {
     this.touchButtons = new TouchButtons(
       deps.container,
       deps.slots,
-      deps.game.touchControls === 'strip' ? 'SMASH' : 'SCATTO',
+      TOUCH_LABEL[deps.game.touchControls],
     );
     this.touchButtons.onPress = (p, a, t) => {
       if (this.mode === 'match') this.touch.press(p, a, t);
@@ -816,7 +820,7 @@ export class App<S extends GameSession = GameSession> {
     if (key !== this.touchUiKey) {
       this.touchUiKey = key;
       if (playing || testing) {
-        const layout = this.deps.game.touchControls === 'strip' ? stripLayout : touchLayout;
+        const layout = TOUCH_LAYOUT[this.deps.game.touchControls];
         this.touchButtons.setLayout(layout(w, h, humans, safeInsets()));
         this.touchButtons.show();
       } else {

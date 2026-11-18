@@ -757,6 +757,79 @@ body.game-scaccia .hud .hud-banner {
   top: 40%;
 }
 
+/*
+ * Graffio Killer: i punti stanno sulla faccia anteriore dei trespoli (uno per colonna).
+ * Misure in proporzione alla scena (--gk-u = pixel per unità mondo, impostato dall'HUD).
+ */
+.gk-col {
+  --u: var(--gk-u, 40px);
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  justify-content: center;
+  gap: 0 calc(var(--u) * 0.12);
+  width: calc(var(--u) * 1.75);
+  padding: calc(var(--u) * 0.06) calc(var(--u) * 0.1);
+  border: 3px solid #000;
+  border-radius: calc(var(--u) * 0.18);
+  background: rgb(43 34 54 / 0.82);
+  text-align: center;
+  font-size: calc(var(--u) * 0.3);
+  line-height: 1.1;
+  pointer-events: none;
+}
+.gk-col .hud-badge {
+  grid-row: auto;
+  padding: calc(var(--u) * 0.05) calc(var(--u) * 0.1);
+  font-size: calc(var(--u) * 0.3);
+  border-width: 2px;
+}
+.gk-col .hud-badge::before,
+.gk-col .hud-badge::after {
+  top: calc(var(--u) * -0.16);
+  border-left-width: calc(var(--u) * 0.1);
+  border-right-width: calc(var(--u) * 0.1);
+  border-bottom-width: calc(var(--u) * 0.16);
+}
+.gk-col .gk-score {
+  font-size: calc(var(--u) * 0.58);
+}
+.gk-col .gk-key {
+  grid-column: span 2;
+  font-size: calc(var(--u) * 0.2);
+  opacity: 0.85;
+}
+.gk-col .gk-key kbd {
+  padding: 0 4px;
+  border: 2px solid #fff;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: calc(var(--u) * 0.22);
+  text-shadow: none;
+  background: rgb(0 0 0 / 0.4);
+}
+body.game-graffio .hud .hud-banner {
+  top: 9%;
+}
+body.game-graffio.touch-mode .hud-round {
+  top: calc(var(--sat) + 8px);
+  left: calc(50% + 52px);
+  transform: none;
+  font-size: 15px;
+}
+body.game-graffio.touch-mode .hud-audio {
+  top: calc(var(--sat) + 10px);
+  left: auto;
+  right: calc(50% + 52px);
+  transform: none;
+}
+body.game-graffio.touch-mode .hud .hud-banner {
+  top: calc(var(--sat) + 40px);
+}
+
 .touch-pause {
   position: absolute;
   top: calc(var(--sat) + 6px);
@@ -1169,7 +1242,7 @@ body.hub {
 .hub-play {
   position: absolute;
   left: 50%;
-  top: 46%;
+  top: 66%;
   transform: translate(-50%, -50%);
 }
 .hub-play button {

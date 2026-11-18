@@ -6,6 +6,7 @@ Raccolta di minigiochi con quattro gatti, in Three.js. All'avvio si apre l'**hub
 | -------------------- | ----------- | --------- |
 | **Pappa Reaction**   | `/pappa/`   | giocabile |
 | **Scaccia la palla** | `/scaccia/` | giocabile |
+| **Graffio Killer**   | `/graffio/` | giocabile |
 
 Ogni gioco ha la sua pagina in un sottopercorso, con i propri parametri URL. Le impostazioni (volumi, tasti, pulsanti touch, schermo intero) sono le stesse per tutti i giochi. Dal titolo di un gioco **Torna all'hub** (o `ESC`, o l'Indietro di Android) riporta all'hub.
 
@@ -19,6 +20,12 @@ Ogni gatto difende la sua cuccia dietro a un cuscino a salsicciotto, ai lati di 
 
 Tasti predefiniti: Priamo `Z` `X` + smash `Q` · Tempesta `V` `B` + `T` · Poh `,` `.` + `O` · Mariù `←` `→` + `↑`. Su telefono e tablet: striscia da trascinare e pulsante SMASH. Stessi parametri URL di sviluppo di Pappa (`/scaccia/?cpu=2,3,4&diff=difficile&seed=1`).
 
+## Graffio Killer
+
+Quattro gatti su altrettanti tiragraffi: un tubo di cartone con una **tacca rossa** cade davanti a ognuno (con un piccolo ritardo diverso), e la zampata va data nell'istante in cui la tacca passa sulla **linea di taglio**. Più il taglio è vicino alla tacca più punti (10, 7, 5, 3, 1, 0); una sola zampata a round, tubi sempre più veloci; 3, 5 o 7 round, a parità vince chi è più preciso in millisecondi. Regole complete nel [GDD di Graffio Killer](docs/GDD_GRAFFIO.md).
+
+Un solo tasto per gatto (`Q` `T` `O` `↑`); su telefono e tablet un pulsante ZAMPATA. Parametri URL come gli altri (`/graffio/?cpu=2,3,4&diff=difficile&seed=1`).
+
 ## Controller
 
 In tutti e due i giochi e nell'hub funzionano i controller (Gamepad API): il primo controller comanda il primo gatto umano, il secondo il secondo, e così via. Levetta o croce per muoversi e per i menu, **A** (o RB/RT) scatto/smash e conferma, **B** (o X/LB/LT) finta e indietro, **START** pausa.
@@ -27,6 +34,7 @@ In tutti e due i giochi e nell'hub funzionano i controller (Gamepad API): il pri
 
 - [Game Design Document](docs/GDD.md) — Pappa Reaction: regole, meccaniche, controlli, CPU, stile
 - [GDD di Scaccia la palla](docs/GDD_SCACCIA.md) — campo, palline, punti, smash ed effetto, CPU
+- [GDD di Graffio Killer](docs/GDD_GRAFFIO.md) — tubi, tacca, giudizio della zampata, CPU
 - [Roadmap tecnica](docs/ROADMAP.md) — stack, architettura, milestone
 - [Domande aperte](docs/DOMANDE_APERTE.md) — decisioni ancora da prendere
 - [Riferimenti grafici](docs/reference/) — foto dei gatti

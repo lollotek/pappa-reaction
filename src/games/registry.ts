@@ -3,7 +3,7 @@
  * Ogni gioco pronto ha la sua pagina in un sottopercorso (`/pappa/`) con
  * i propri parametri URL; quelli "prossimamente" hanno solo la scheda.
  */
-export type GameId = 'pappa' | 'scaccia';
+export type GameId = 'pappa' | 'scaccia' | 'graffio';
 
 export interface GameInfo {
   id: GameId;
@@ -33,6 +33,14 @@ export const GAMES: readonly GameInfo[] = [
     players: '1–4 giocatori',
     status: 'ready',
     colors: { bg: '#3f7a52', dark: '#24452f', ink: '#ffe066' },
+  },
+  {
+    id: 'graffio',
+    title: ['Graffio', 'Killer'],
+    tagline: 'Taglia il tubo di cartone proprio sulla tacca rossa… con una zampata a tempo!',
+    players: '1–4 giocatori',
+    status: 'ready',
+    colors: { bg: '#a8582c', dark: '#5e2f17', ink: '#ffd9a0' },
   },
 ];
 

@@ -1,14 +1,15 @@
 import * as THREE from 'three';
 import type { PlayerSlot } from '../config/controls';
 import type { GameInfo } from '../games/registry';
+import { cardboardTexture } from '../games/graffio/render/textures';
 import { createToy } from '../games/scaccia/render/toys';
 import { CatModel, type CatPose } from '../render/CatModel';
 import { createBowlContents } from '../render/BowlContents';
 
-/** Distanza dal centro dei due oggetti: in mezzo resta lo spazio per "Avvia". */
-const ITEM_X = 2.7;
-/** Metà della larghezza da tenere sempre in vista (oggetti + gatti ai lati). */
-const VIEW_HALF_W = 6.8;
+/** Distanza tra due oggetti vicini, divisa per due. */
+const ITEM_X = 1.95;
+/** Spazio tra l'ultimo oggetto e i gatti ai lati. */
+const CAT_MARGIN = 2.1;
 const VIEW_HALF_H = 2.6;
 const BASE_Y = 1.45;
 const LOOK_AT = new THREE.Vector3(0, 1.6, 0);
@@ -29,7 +30,8 @@ interface Item {
 
 /**
  * Scena 3D dell'hub: un oggetto per gioco su fondo nero (il piattino col
- * salmone per Pappa Reaction, la pallina per Scaccia la palla), con i quattro
+ * salmone per Pappa Reaction, la pallina per Scaccia la palla, il tubo di
+ * cartone per Graffio Killer), con i quattro
  * gatti ai lati che guardano quello selezionato. I testi sono in HTML.
  */
 export class HubScene {
@@ -43,6 +45,8 @@ export class HubScene {
   private openedAt: number | null = null;
   private shakeAt = -Infinity;
   private shakeItem = -1;
+  /** Metà della larghezza da tenere sempre in vista (oggetti + gatti ai lati). */
+  private readonly viewHalfW: number;
 
   constructor(games: readonly GameInfo[], slots: readonly PlayerSlot[]) {
     this.scene.background = new THREE.Color('#000');
@@ -63,7 +67,8 @@ export class HubScene {
     games.forEach((game, i) => {
       const x = (i - (games.length - 1) / 2) * 2 * ITEM_X;
       const group = new THREE.Group();
-      const built = game.id === 'pappa' ? buildPlate() : buildBall();
+      const built =
+        game.id === 'pappa' ? buildPlate() : game.id === 'graffio' ? buildTube() : buildBall();
       const body = built.spin;
       group.add(built.root);
       // Alone morbido dietro l'oggetto selezionato.
@@ -91,7 +96,8 @@ export class HubScene {
     });
 
     // Due gatti per lato, seduti davanti alla pedana.
-    const side = ITEM_X + 2.2;
+    const side = (games.length - 1) * ITEM_X + CAT_MARGIN;
+    this.viewHalfW = side + 1.15 + 0.8;
     const spots = [-side - 1.15, -side, side, side + 1.15];
     slots.forEach((slot, i) => {
       const model = new CatModel({
@@ -110,7 +116,7 @@ export class HubScene {
   fit(): void {
     const vFov = THREE.MathUtils.degToRad(this.camera.fov);
     const hFov = 2 * Math.atan(Math.tan(vFov / 2) * this.camera.aspect);
-    const dist = Math.max(VIEW_HALF_W / Math.tan(hFov / 2), VIEW_HALF_H / Math.tan(vFov / 2));
+    const dist = Math.max(this.viewHalfW / Math.tan(hFov / 2), VIEW_HALF_H / Math.tan(vFov / 2));
     this.camera.position.set(0, LOOK_AT.y + dist * 0.12, dist);
     this.camera.lookAt(LOOK_AT);
   }
@@ -234,6 +240,35 @@ function buildPlate(): Built {
     spin.add(salmon);
   }
   // Il gruppo esterno resta inclinato, quello interno gira.
+  return { root: tilt, spin };
+}
+
+/** Tubo di cartone con la tacca rossa, spezzato da un taglio netto. */
+function buildTube(): Built {
+  const tilt = new THREE.Group();
+  tilt.rotation.x = 0.25;
+  const spin = new THREE.Group();
+  tilt.add(spin);
+  const card = new THREE.MeshLambertMaterial({ map: cardboardTexture(), flatShading: true });
+  const cap = flat('#e3b27a');
+  const piece = (len: number, y: number): THREE.Mesh => {
+    const m = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.62, len, 12), [card, cap, cap]);
+    m.position.y = y;
+    return m;
+  };
+  // Pezzo sotto e pezzo sopra, appena staccati dal taglio.
+  spin.add(piece(1.5, -0.95), piece(1.4, 0.75));
+  const band = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.64, 0.64, 0.24, 12, 1, true),
+    new THREE.MeshBasicMaterial({ color: '#ff3030', side: THREE.DoubleSide }),
+  );
+  band.position.y = -0.45;
+  const tape = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.645, 0.645, 0.14, 12, 1, true),
+    flat('#f2ede0'),
+  );
+  tape.position.y = 1.1;
+  spin.add(band, tape);
   return { root: tilt, spin };
 }
 

@@ -163,3 +163,33 @@ export function stripLayout(
     },
   ];
 }
+
+/**
+ * Comandi touch di Graffio Killer: un solo pulsante grande, ZAMPATA.
+ *
+ * - 1 giocatore: sotto il pollice destro.
+ * - 2 giocatori: uno per lato (il primo a sinistra, il secondo a destra).
+ *
+ * Più grande del pulsante SCATTO: qui conta il tempismo, non la mira.
+ */
+export function singleLayout(
+  viewW: number,
+  viewH: number,
+  humans: readonly number[],
+  insets: Insets = NO_INSETS,
+): TouchButtonSpec[] {
+  const size = Math.round(Math.min(DASH_MAX * 1.2, Math.max(DASH_MIN, viewH * 0.3)));
+  const margin = Math.max(MIN_SIDE_MARGIN, Math.round(viewW * 0.025));
+  const cy = insets.top + (viewH - insets.top - insets.bottom) * 0.6;
+  const leftX = insets.left + margin + size / 2;
+  const rightX = viewW - insets.right - margin - size / 2;
+  if (humans.length === 0) return [];
+  if (humans.length === 1) {
+    return [{ player: humans[0], action: 'dash', side: 'right', cx: rightX, cy, size }];
+  }
+  const [a, b] = humans;
+  return [
+    { player: a, action: 'dash', side: 'left', cx: leftX, cy, size },
+    { player: b, action: 'dash', side: 'right', cx: rightX, cy, size },
+  ];
+}

@@ -293,3 +293,13 @@ Regole: [GDD_SCACCIA.md](GDD_SCACCIA.md).
    - _Gesti di sistema sui bordi_ (Indietro di Android, barra Home di iOS, tendina notifiche) vicini ai pulsanti → pulsanti staccati dal bordo, prove su dispositivo.
    - _Spazio su telefono_: in 2 giocatori 4 pulsanti e 4 pannelli dei punteggi su uno schermo piccolo → HUD compatto, prove su un telefono piccolo.
    - _Latenza del tocco_ diversa tra dispositivi → uguale per i due umani sullo stesso dispositivo; conta solo nel confronto con le CPU.
+
+### Graffio Killer (M13) ✅ (2026-11-18, provato in browser e in emulazione touch: da provare su dispositivi veri)
+
+Regole: [GDD_GRAFFIO.md](GDD_GRAFFIO.md).
+
+- [x] Logica pura calcolata dal tempo `src/games/graffio/core/GraffioMatch.ts`: fasi del round, caduta sfalsata, giudizio con l'istante esatto della pressione, punti, spareggio per scarto in ms. Test in `tests/graffio.test.ts`.
+- [x] CPU con errore gaussiano per difficoltà (`ai/GraffioCpu.ts`).
+- [x] Scena frontale con tiragraffi, tubi di cartone con tacca, taglio in due pezzi, lampo e sbuffo; HUD con i punti sulle colonne.
+- [x] Comandi touch a pulsante singolo (`singleLayout`, `touchControls: 'single'`), pagina `/graffio/`, scheda nell'hub (tre schede: layout e "Avvia" ritoccati).
+- [ ] Tarare soglie e velocità giocando; prova su dispositivi e controller veri.
