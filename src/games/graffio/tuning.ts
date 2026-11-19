@@ -38,10 +38,10 @@ export const graffioTuning = {
     result: 2.0,
   },
   /** Velocità di caduta: cresce a ogni round, fino a un massimo. */
-  speed: { base: 3.0, growth: 1.17, max: 9 },
+  speed: { base: 4.6, growth: 1.18, max: 12 },
   /**
    * Punti per scarto (distanza tra tacca e taglio, in unità). Le soglie sono
-   * fisse: con la velocità che sale, in millisecondi si stringono.
+   * fisse: con la velocità che sale, in millisecondi si stringono (±0,14 = ±30 ms al round 1).
    */
   scoring: [
     { maxDist: 0.14, points: 10, label: 'Perfetto!' },

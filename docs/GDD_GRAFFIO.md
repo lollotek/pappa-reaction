@@ -14,7 +14,7 @@ Quattro gatti su altrettanti tiragraffi tagliano al volo un tubo di cartone che 
 - **Camera frontale** quasi orizzontale: quattro colonne affiancate (da sinistra Priamo, Tempesta, Poh, Mariù), ognuna con un **tiragrafi** nel colore del gatto (base di legno, corda di sisal).
 - I **punti stanno sui tiragraffi** (pannello sulla faccia anteriore di ogni colonna); i punti di ogni taglio compaiono sopra la linea di taglio.
 - La **linea di taglio** è fissa, uguale per tutti: una linea gialla tenue con due **tacchette** triangolari ai lati di ogni colonna.
-- Il **tubo** è di cartone ondulato con un nastro di carta; la **tacca** è una fascia rossa con i bordi bianchi, spessa quanto la zona "perfetta".
+- Il **tubo** è di cartone ondulato; la **tacca** è una fascia rossa con i bordi bianchi, spessa quanto la zona "perfetta".
 
 ## 3. Il round
 
@@ -50,7 +50,7 @@ L'ordine di caduta è casuale a ogni round. La fase `drop` finisce 0,55 s dopo l
 
 ## 5. Velocità
 
-Velocità di caduta `v = 3,0 × 1,17^round` u/s (massimo 9). Le soglie dei punti sono fisse in distanza, quindi in millisecondi si stringono: la zona "perfetta" (±0,14) vale circa ±47 ms al round 1, ±35 ms al 3°, ±25 ms al 5°.
+Velocità di caduta `v = 4,6 × 1,18^round` u/s (massimo 12). Le soglie dei punti sono fisse in distanza, quindi in millisecondi si stringono: la zona "perfetta" (±0,14) vale circa ±30 ms al round 1, ±22 ms al 3°, ±16 ms al 5°.
 
 ## 6. Vittoria
 

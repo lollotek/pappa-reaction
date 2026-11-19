@@ -263,12 +263,7 @@ function buildTube(): Built {
     new THREE.MeshBasicMaterial({ color: '#ff3030', side: THREE.DoubleSide }),
   );
   band.position.y = -0.45;
-  const tape = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.645, 0.645, 0.14, 12, 1, true),
-    flat('#f2ede0'),
-  );
-  tape.position.y = 1.1;
-  spin.add(band, tape);
+  spin.add(band);
   return { root: tilt, spin };
 }
 

@@ -334,18 +334,13 @@ export class GraffioScene {
     cat.root.scale.setScalar(CAT_SCALE);
     catHolder.add(cat.root);
 
-    // Tubo di cartone intero (origine al centro) con nastro di carta.
+    // Tubo di cartone intero (origine al centro).
     const full = new THREE.Group();
     const body = new THREE.Mesh(
       new THREE.CylinderGeometry(g.logRadius, g.logRadius, g.logLength, 12),
       [this.cardboard, this.capMat, this.capMat],
     );
-    const tape = new THREE.Mesh(
-      new THREE.CylinderGeometry(g.logRadius + 0.025, g.logRadius + 0.025, 0.12, 12, 1, true),
-      new THREE.MeshLambertMaterial({ color: '#f2ede0', flatShading: true }),
-    );
-    tape.position.y = g.logLength * 0.3;
-    full.add(body, tape);
+    full.add(body);
 
     const unit = new THREE.CylinderGeometry(g.logRadius, g.logRadius, 1, 12);
     const stub = new THREE.Mesh(unit, [this.cardboard, this.capMat, this.capMat]);
