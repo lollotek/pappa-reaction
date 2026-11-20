@@ -14,8 +14,8 @@ import type { PlayerAction } from '../core/MatchMachine';
 
 export interface TouchButtonSpec {
   player: number;
-  /** `move`: striscia da trascinare (Scaccia la palla). */
-  action: PlayerAction | 'move';
+  /** `move`: striscia da trascinare (Scaccia la palla); `stick`: joystick virtuale (Corsa pazza). */
+  action: PlayerAction | 'move' | 'stick';
   side: 'left' | 'right';
   /** Centro e dimensione (lato del quadrato che contiene il pulsante). */
   cx: number;
@@ -191,5 +191,74 @@ export function singleLayout(
   return [
     { player: a, action: 'dash', side: 'left', cx: leftX, cy, size },
     { player: b, action: 'dash', side: 'right', cx: rightX, cy, size },
+  ];
+}
+
+/**
+ * Comandi touch di Corsa pazza: joystick virtuale (cerchietto da muovere dentro
+ * un cerchio grande) e pulsante CACCHETTA.
+ *
+ * - 1 giocatore: joystick sotto il pollice sinistro, CACCHETTA sotto il destro.
+ * - 2 giocatori: una colonna per lato, CACCHETTA sopra e joystick sotto.
+ */
+export function stickLayout(
+  viewW: number,
+  viewH: number,
+  humans: readonly number[],
+  insets: Insets = NO_INSETS,
+): TouchButtonSpec[] {
+  const dash = Math.round(Math.min(DASH_MAX, Math.max(DASH_MIN, viewH * 0.26)));
+  const pad = Math.round(Math.min(dash * 1.45, viewH * 0.36));
+  const gap = Math.max(MIN_GAP, Math.round(dash * 0.2));
+  const margin = Math.max(MIN_SIDE_MARGIN, Math.round(viewW * 0.025));
+  const usableTop = insets.top;
+  const usableH = viewH - insets.top - insets.bottom;
+  const leftEdge = insets.left + margin;
+  const rightEdge = viewW - insets.right - margin;
+
+  if (humans.length === 0) return [];
+
+  if (humans.length === 1) {
+    const p = humans[0];
+    const cy = usableTop + usableH * 0.6;
+    return [
+      { player: p, action: 'stick', side: 'left', cx: leftEdge + pad / 2, cy, size: pad },
+      { player: p, action: 'dash', side: 'right', cx: rightEdge - dash / 2, cy, size: dash },
+    ];
+  }
+
+  const small = Math.round(pad * 0.82);
+  const column = dash * 0.8 + gap + small;
+  const top = usableTop + usableH * 0.53 - column / 2;
+  const dashSize = Math.round(dash * 0.8);
+  const dashY = top + dashSize / 2;
+  const stickY = top + dashSize + gap + small / 2;
+  const [a, b] = humans;
+  return [
+    {
+      player: a,
+      action: 'dash',
+      side: 'left',
+      cx: leftEdge + small / 2,
+      cy: dashY,
+      size: dashSize,
+    },
+    { player: a, action: 'stick', side: 'left', cx: leftEdge + small / 2, cy: stickY, size: small },
+    {
+      player: b,
+      action: 'dash',
+      side: 'right',
+      cx: rightEdge - small / 2,
+      cy: dashY,
+      size: dashSize,
+    },
+    {
+      player: b,
+      action: 'stick',
+      side: 'right',
+      cx: rightEdge - small / 2,
+      cy: stickY,
+      size: small,
+    },
   ];
 }

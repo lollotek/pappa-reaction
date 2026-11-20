@@ -20,6 +20,8 @@ export class MenuView {
   constructor(
     container: HTMLElement,
     private readonly onChange: () => void,
+    /** Un tocco o clic ha mosso o attivato una voce (per il suono). */
+    private readonly onTap: (activated: boolean) => void = () => {},
   ) {
     this.root = document.createElement('div');
     this.root.className = 'menu';
@@ -80,6 +82,7 @@ export class MenuView {
       this.model.select(up.index);
       if (down.dir) this.model.adjust(item, Number(down.dir) as -1 | 1);
       else this.model.activate(item);
+      this.onTap(!down.dir);
       this.render();
       this.onChange();
     });

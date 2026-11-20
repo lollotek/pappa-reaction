@@ -705,6 +705,23 @@ body.touch-mode .touch-only {
   opacity: 0.35;
   filter: grayscale(0.8);
 }
+/* Joystick virtuale (Corsa pazza): cerchietto da muovere dentro un cerchio grande. */
+.touch-stick {
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--badge) 28%, transparent);
+  border: 3px solid color-mix(in srgb, var(--badge) 70%, #000);
+  box-shadow: none;
+}
+.touch-stick.held {
+  transform: none;
+  background: color-mix(in srgb, var(--badge) 42%, transparent);
+}
+.touch-stick .touch-knob {
+  width: 42%;
+  height: 42%;
+  transform: translate(-50%, -50%);
+  background: color-mix(in srgb, var(--badge) 80%, #fff);
+}
 /* Striscia da trascinare (Scaccia la palla): il cuscino segue il dito. */
 .touch-move {
   border-radius: 999px;
@@ -1137,6 +1154,28 @@ body.touch-mode .menu-arrow {
     text-shadow: 0 2px #000;
   }
 }
+/* Pulsante per forzare lo schermo intero, se il browser non l'ha concesso da solo. */
+.fs-button {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 8px);
+  right: calc(env(safe-area-inset-right, 0px) + 8px);
+  z-index: 25;
+}
+.fs-button[hidden] {
+  display: none;
+}
+.fs-button button {
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffb347;
+  background: rgba(0, 0, 0, 0.65);
+  border: 2px solid #ffb347;
+  border-radius: 999px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
 .rotate-hint p {
   margin: 0;
 }
@@ -1199,12 +1238,6 @@ body.hub {
   font-size: clamp(16px, 2.4vw, 28px);
 }
 .hub-info {
-  position: absolute;
-  left: 50%;
-  bottom: calc(4% + var(--sab, 0px));
-  transform: translateX(-50%);
-  width: min(720px, calc(100vw - 32px));
-  text-align: center;
   color: #fff;
   pointer-events: none;
   text-shadow:
@@ -1212,6 +1245,82 @@ body.hub {
     -2px 0 #000,
     0 2px #000,
     0 -2px #000;
+}
+/* A destra: nome, descrizione e Avvia (sotto, in verticale). */
+.hub-panel {
+  position: absolute;
+  right: calc(4% + env(safe-area-inset-right, 0px));
+  top: 52%;
+  transform: translateY(-50%);
+  width: min(44%, 460px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 18px;
+  text-align: left;
+}
+/* Frecce ai lati della vetrina (la parte sinistra dello schermo). */
+.hub-nav {
+  position: absolute;
+  left: 0;
+  top: 46%;
+  width: 50%;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 calc(10px + env(safe-area-inset-left, 0px));
+  box-sizing: border-box;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+.hub-arrow {
+  width: clamp(44px, 7vw, 72px);
+  height: clamp(44px, 7vw, 72px);
+  padding: 0 0 0.12em;
+  font: inherit;
+  font-weight: 700;
+  font-size: clamp(30px, 5vw, 52px);
+  line-height: 1;
+  color: #ffb347;
+  background: rgba(0, 0, 0, 0.6);
+  border: 3px solid #ffb347;
+  border-radius: 50%;
+  cursor: pointer;
+  pointer-events: auto;
+  touch-action: manipulation;
+}
+.hub-arrow:active {
+  transform: scale(0.92);
+}
+.hub-dots {
+  display: flex;
+  gap: 8px;
+}
+.hub-dots i {
+  width: 10px;
+  height: 10px;
+  border: 2px solid #8c849a;
+  border-radius: 50%;
+}
+.hub-dots i.on {
+  background: #ffb347;
+  border-color: #ffb347;
+}
+@media (orientation: portrait) {
+  .hub-panel {
+    right: 0;
+    left: 0;
+    top: auto;
+    bottom: calc(4% + var(--sab, 0px));
+    transform: none;
+    width: auto;
+    margin: 0 16px;
+    align-items: center;
+    text-align: center;
+  }
+  .hub-nav {
+    width: 100%;
+    top: 30%;
+  }
 }
 .hub-info h2 {
   margin: 0;
@@ -1233,17 +1342,6 @@ body.hub {
   margin-top: 10px !important;
   color: #8c849a;
   font-size: clamp(12px, 1.4vw, 16px);
-}
-.hub-info {
-  padding: 8px 14px 10px;
-  background: rgba(0, 0, 0, 0.62);
-  border-radius: 14px;
-}
-.hub-play {
-  position: absolute;
-  left: 50%;
-  top: 66%;
-  transform: translate(-50%, -50%);
 }
 .hub-play button {
   font: inherit;
@@ -1297,4 +1395,101 @@ body.hub {
   .hub-hint {
     margin-top: 2px !important;
   }
+}
+
+/* Corsa pazza: classifica nell'isola al centro, cacchette in riserva nei pannelli. */
+.corsa-board {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  padding: 6px 12px 7px;
+  border: 3px solid #000;
+  border-radius: 14px;
+  background: rgb(43 34 54 / 0.78);
+  pointer-events: none;
+}
+.corsa-lap {
+  font-size: clamp(12px, 2.3vh, 20px);
+  font-weight: 700;
+  text-align: center;
+  color: #ffe066;
+}
+.corsa-rows {
+  /* Due colonne (1°–2° a sinistra, 3°–4° a destra): l'isola è larga e bassa. */
+  display: grid;
+  grid-template-rows: repeat(2, auto);
+  grid-auto-flow: column;
+  gap: 2px 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.corsa-rows li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: clamp(11px, 2vh, 17px);
+  font-weight: 700;
+}
+.corsa-rows b {
+  display: inline-grid;
+  place-items: center;
+  width: 1.55em;
+  height: 1.55em;
+  border: 2px solid #000;
+  border-radius: 50%;
+  background: var(--badge);
+  text-shadow: none;
+  color: #fff;
+  -webkit-text-stroke: 0;
+}
+.corsa-traps {
+  display: flex;
+  gap: 4px;
+  min-height: 14px;
+}
+.corsa-traps i {
+  width: 13px;
+  height: 13px;
+  border: 2px solid #000;
+  border-radius: 50% 50% 38% 38%;
+  background: rgb(255 255 255 / 0.18);
+}
+.corsa-traps i.on {
+  background: #c98a45;
+}
+body.game-corsa .hud .hud-banner {
+  top: 12%;
+}
+body.game-corsa.touch-mode .hud-audio {
+  top: calc(var(--sat) + 10px);
+  left: auto;
+  right: calc(50% + 52px);
+  transform: none;
+}
+body.game-corsa.touch-mode .hud .hud-banner {
+  top: calc(var(--sat) + 40px);
+}
+.corsa-board[hidden] {
+  display: none;
+}
+
+/* Gioco aperto sopra l'hub senza cambiare pagina (lo schermo intero resta). */
+.hub-game {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #000;
+  opacity: 0;
+  transition: opacity 0.2s ease-out;
+}
+.hub-game.ready {
+  opacity: 1;
 }

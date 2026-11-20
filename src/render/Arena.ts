@@ -74,6 +74,8 @@ export class Arena {
   constructor(
     readonly map: ArenaMap = 'salotto',
     readonly bare = false,
+    /** Giardino: `dirt` false = niente spiazzo rotondo, `decor` false = niente decori (li mette chi la usa). */
+    private readonly options: { dirt?: boolean; decor?: boolean } = {},
   ) {
     if (map === 'balcone') this.buildBalcony();
     else if (map === 'giardino') this.buildGarden();
@@ -91,8 +93,9 @@ export class Arena {
     }
 
     if (map === 'balcone') this.buildBalconyDecor();
-    else if (map === 'giardino') this.buildGardenDecor();
-    else this.buildDecor();
+    else if (map === 'giardino') {
+      if (this.options.decor !== false) this.buildGardenDecor();
+    } else this.buildDecor();
   }
 
   /** True se i gatti nuotano invece di correre. */
@@ -183,7 +186,8 @@ export class Arena {
       new THREE.MeshLambertMaterial({ map: dirtTexture(128, 0.54, 0.72), alphaTest: 0.5 }),
     );
     dirt.rotation.x = -Math.PI / 2;
-    this.group.add(lawn, back, dirt);
+    this.group.add(lawn, back);
+    if (this.options.dirt !== false) this.group.add(dirt);
   }
 
   private buildBalcony(): void {
@@ -394,7 +398,7 @@ export class Arena {
     this.lid.add(this.hand);
   }
 
-  private placeSprite(s: Sprite, x: number, z: number, scale = 1): void {
+  placeSprite(s: Sprite, x: number, z: number, scale = 1): void {
     const w = (s.width / SPRITE_PX_PER_UNIT) * scale;
     const h = (s.height / SPRITE_PX_PER_UNIT) * scale;
     const m = new THREE.Mesh(

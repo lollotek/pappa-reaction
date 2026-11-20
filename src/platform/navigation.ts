@@ -21,6 +21,15 @@ export function openGame(url: string): void {
  * del gioco (vedi BackButton), da saltare insieme alla pagina stessa.
  */
 export function backToHub(hubUrl: string, extraEntries: number): void {
+  // Gioco aperto dentro l'hub (iframe): l'hub lo chiude e sistema la cronologia.
+  if (window.parent !== window) {
+    try {
+      window.parent.postMessage({ priamo: 'close', extra: extraEntries }, location.origin);
+      return;
+    } catch {
+      /* non si riesce a parlare con l'hub: si va alla pagina dell'hub */
+    }
+  }
   let fromHub = false;
   try {
     fromHub = sessionStorage.getItem(FROM_HUB) === '1';

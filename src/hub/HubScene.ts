@@ -6,11 +6,16 @@ import { createToy } from '../games/scaccia/render/toys';
 import { CatModel, type CatPose } from '../render/CatModel';
 import { createBowlContents } from '../render/BowlContents';
 
-/** Distanza tra due oggetti vicini, divisa per due. */
-const ITEM_X = 1.95;
-/** Spazio tra l'ultimo oggetto e i gatti ai lati. */
-const CAT_MARGIN = 2.1;
-const VIEW_HALF_H = 2.6;
+/** Distanza tra due oggetti vicini nello scorrimento (ne resta visibile uno solo). */
+const ITEM_SPACING = 4.4;
+/** Metà larghezza della "vetrina": oggetto più i gatti ai lati. */
+const STAGE_HALF_W = 4.1;
+/** Dove sta il centro della vetrina: frazione dello schermo da sinistra (orizzontale) o dall'alto (verticale). */
+const STAGE_CENTER_X = 0.28;
+const STAGE_CENTER_Y = 0.3;
+/** Posti dei gatti rispetto all'oggetto. */
+const CAT_SPOTS = [-3.4, -2.3, 2.3, 3.4];
+const VIEW_HALF_H = 3.1;
 const BASE_Y = 1.45;
 const LOOK_AT = new THREE.Vector3(0, 1.6, 0);
 const OPEN_MS = 520;
@@ -23,7 +28,6 @@ interface Item {
   /** Parte che gira su sé stessa. */
   body: THREE.Object3D;
   halo: THREE.Mesh;
-  x: number;
   /** 0..1, segue la selezione con una molla. */
   focus: number;
 }
@@ -31,7 +35,7 @@ interface Item {
 /**
  * Scena 3D dell'hub: un oggetto per gioco su fondo nero (il piattino col
  * salmone per Pappa Reaction, la pallina per Scaccia la palla, il tubo di
- * cartone per Graffio Killer), con i quattro
+ * cartone per Graffio Killer, la pista con la cacchetta per Corsa pazza), con i quattro
  * gatti ai lati che guardano quello selezionato. I testi sono in HTML.
  */
 export class HubScene {
@@ -39,21 +43,23 @@ export class HubScene {
   readonly camera = new THREE.PerspectiveCamera(30, 16 / 9, 0.1, 100);
   readonly items: Item[] = [];
   selected = 0;
+  /** Tutto quel che sta in vetrina: si sposta di lato (o in alto) per lasciare posto al testo. */
+  private readonly stage = new THREE.Group();
+  /** Posizione di scorrimento (indice frazionario del gioco mostrato). */
+  private scroll = 0;
   private readonly cats: { model: CatModel; x: number }[] = [];
   private readonly raycaster = new THREE.Raycaster();
   private lastNow: number | null = null;
   private openedAt: number | null = null;
   private shakeAt = -Infinity;
   private shakeItem = -1;
-  /** Metà della larghezza da tenere sempre in vista (oggetti + gatti ai lati). */
-  private readonly viewHalfW: number;
 
   constructor(games: readonly GameInfo[], slots: readonly PlayerSlot[]) {
     this.scene.background = new THREE.Color('#000');
     this.scene.add(new THREE.AmbientLight('#ffffff', 0.7));
     const key = new THREE.DirectionalLight('#fff0d8', 1.7);
     key.position.set(2, 8, 9);
-    this.scene.add(key);
+    this.scene.add(key, this.stage);
 
     // Pedana appena visibile sotto oggetti e gatti.
     const floor = new THREE.Mesh(
@@ -62,13 +68,18 @@ export class HubScene {
     );
     floor.rotation.x = -Math.PI / 2;
     floor.scale.set(1, 0.45, 1);
-    this.scene.add(floor);
+    this.stage.add(floor);
 
     games.forEach((game, i) => {
-      const x = (i - (games.length - 1) / 2) * 2 * ITEM_X;
       const group = new THREE.Group();
       const built =
-        game.id === 'pappa' ? buildPlate() : game.id === 'graffio' ? buildTube() : buildBall();
+        game.id === 'pappa'
+          ? buildPlate()
+          : game.id === 'graffio'
+            ? buildTube()
+            : game.id === 'corsa'
+              ? buildTrack()
+              : buildBall();
       const body = built.spin;
       group.add(built.root);
       // Alone morbido dietro l'oggetto selezionato.
@@ -90,15 +101,13 @@ export class HubScene {
       );
       group.add(hit);
       group.traverse((o) => (o.userData.item = i));
-      group.position.set(x, BASE_Y, 0);
-      this.scene.add(group);
-      this.items.push({ game, group, body, halo, x, focus: 0 });
+      group.position.set(0, BASE_Y, 0);
+      this.stage.add(group);
+      this.items.push({ game, group, body, halo, focus: 0 });
     });
 
     // Due gatti per lato, seduti davanti alla pedana.
-    const side = (games.length - 1) * ITEM_X + CAT_MARGIN;
-    this.viewHalfW = side + 1.15 + 0.8;
-    const spots = [-side - 1.15, -side, side, side + 1.15];
+    const spots = CAT_SPOTS;
     slots.forEach((slot, i) => {
       const model = new CatModel({
         breed: slot.breed,
@@ -107,18 +116,31 @@ export class HubScene {
       });
       const x = spots[i] ?? 0;
       model.root.position.set(x, 0, i % 3 === 0 ? 0.2 : 0.9);
-      this.scene.add(model.root);
+      this.stage.add(model.root);
       this.cats.push({ model, x });
     });
   }
 
-  /** Inquadratura che tiene in vista tutto, in orizzontale come in verticale. */
+  /**
+   * Inquadratura: la vetrina (oggetto e gatti) occupa la parte sinistra dello
+   * schermo (in alto se è in verticale), il resto è per il testo.
+   */
   fit(): void {
+    const portrait = this.camera.aspect < 1;
     const vFov = THREE.MathUtils.degToRad(this.camera.fov);
     const hFov = 2 * Math.atan(Math.tan(vFov / 2) * this.camera.aspect);
-    const dist = Math.max(this.viewHalfW / Math.tan(hFov / 2), VIEW_HALF_H / Math.tan(vFov / 2));
+    const halfW = portrait ? STAGE_HALF_W : STAGE_HALF_W / (2 * STAGE_CENTER_X);
+    const halfH = portrait ? VIEW_HALF_H / (2 * STAGE_CENTER_Y) : VIEW_HALF_H;
+    const dist = Math.max(halfW / Math.tan(hFov / 2), halfH / Math.tan(vFov / 2));
     this.camera.position.set(0, LOOK_AT.y + dist * 0.12, dist);
     this.camera.lookAt(LOOK_AT);
+    const seenW = dist * Math.tan(hFov / 2);
+    const seenH = dist * Math.tan(vFov / 2);
+    this.stage.position.set(
+      portrait ? 0 : (2 * STAGE_CENTER_X - 1) * seenW,
+      portrait ? (1 - 2 * STAGE_CENTER_Y) * seenH : 0,
+      0,
+    );
   }
 
   /** Indice dell'oggetto sotto il punto (coordinate normalizzate −1..1), o null. */
@@ -157,17 +179,22 @@ export class HubScene {
     const k = 1 - Math.exp(-dt / 90);
     const open = this.openedAt === null ? 0 : Math.min(1, (now - this.openedAt) / OPEN_MS);
 
+    this.scroll += (this.selected - this.scroll) * (1 - Math.exp(-dt / 110));
     this.items.forEach((item, i) => {
+      const d = i - this.scroll;
+      // Scorre di lato e rimpicciolisce uscendo: ne vedi uno alla volta.
+      const vis = THREE.MathUtils.clamp((1 - Math.abs(d)) / 0.5, 0, 1);
       const target = i === this.selected ? 1 : 0;
       item.focus += (target - item.focus) * k;
       const f = item.focus;
       const g = item.group;
+      g.visible = vis > 0.01;
       const bob = Math.sin(now * 0.003 + i) * 0.09 * f;
-      g.position.x = item.x;
+      g.position.x = d * ITEM_SPACING;
       g.position.y = BASE_Y + 0.25 * f + bob;
       g.position.z = 0.8 * f;
       g.rotation.z = 0;
-      g.scale.setScalar(0.82 + 0.28 * f);
+      g.scale.setScalar((0.82 + 0.28 * f) * vis);
       // Gira piano se a riposo, vivace quando è selezionato.
       item.body.rotation.y = now * (0.0004 + 0.0014 * f) * (i % 2 ? -1 : 1);
       (item.halo.material as THREE.MeshBasicMaterial).opacity =
@@ -180,16 +207,16 @@ export class HubScene {
       if (open > 0 && i === this.selected) {
         // Verso la camera, centrato.
         const e = open * open;
-        g.position.x = item.x * (1 - e);
+        // Verso il centro dello schermo (la vetrina è spostata di lato).
+        g.position.x = g.position.x * (1 - e) - this.stage.position.x * e;
         g.position.z = 0.8 + e * (this.camera.position.z * 0.55);
-        g.position.y += (LOOK_AT.y + 0.4 - g.position.y) * e;
+        g.position.y += (LOOK_AT.y + 0.4 - this.stage.position.y - g.position.y) * e;
       }
     });
 
-    const sel = this.items[this.selected];
     for (const [i, cat] of this.cats.entries()) {
       // Guardano l'oggetto selezionato.
-      const dx = (sel?.group.position.x ?? 0) - cat.x;
+      const dx = -cat.x; // guardano l'oggetto al centro della vetrina
       cat.model.root.rotation.y = THREE.MathUtils.clamp(Math.atan2(dx, 4) * 0.8, -0.9, 0.9);
       const pose: CatPose = open > 0 ? 'celebrate' : i % 2 ? 'idle' : 'sit';
       const hop = pose === 'celebrate' ? Math.abs(Math.sin(now * 0.012 + i)) * 0.35 : 0;
@@ -271,4 +298,81 @@ function buildTube(): Built {
 function buildBall(): Built {
   const ball = createToy('sonaglio', 1, 1.1);
   return { root: ball, spin: ball };
+}
+
+/** Rettangolo con gli angoli arrotondati, come forma (o buco) da estrudere. */
+function roundedRect(
+  w: number,
+  h: number,
+  r: number,
+  path: THREE.Path = new THREE.Shape(),
+): THREE.Path {
+  const x = -w / 2;
+  const y = -h / 2;
+  path.moveTo(x + r, y);
+  path.lineTo(x + w - r, y);
+  path.quadraticCurveTo(x + w, y, x + w, y + r);
+  path.lineTo(x + w, y + h - r);
+  path.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  path.lineTo(x + r, y + h);
+  path.quadraticCurveTo(x, y + h, x, y + h - r);
+  path.lineTo(x, y + r);
+  path.quadraticCurveTo(x, y, x + r, y);
+  return path;
+}
+
+/** Pista di terra battuta con l'isola d'erba, lo steccato e una cacchetta. */
+function buildTrack(): Built {
+  const tilt = new THREE.Group();
+  tilt.rotation.x = 0.7;
+  const spin = new THREE.Group();
+  tilt.add(spin);
+
+  const depth = 0.16;
+  const ringShape = roundedRect(3.1, 2.1, 0.75) as THREE.Shape;
+  ringShape.holes.push(roundedRect(1.5, 0.5, 0.2, new THREE.Path()));
+  const ring = new THREE.Mesh(
+    new THREE.ExtrudeGeometry(ringShape, { depth, bevelEnabled: false }),
+    [flat('#b08158'), flat('#8f6a40')],
+  );
+  const island = new THREE.Mesh(
+    new THREE.ExtrudeGeometry(roundedRect(1.5, 0.5, 0.2) as THREE.Shape, {
+      depth: depth * 0.8,
+      bevelEnabled: false,
+    }),
+    flat('#5aa04f'),
+  );
+  // L'estrusione parte sul piano xy: si sdraia con il lato lungo verso la camera.
+  const base = new THREE.Group();
+  base.rotation.x = -Math.PI / 2;
+  base.add(ring, island);
+  spin.add(base);
+
+  // Steccato: sottile bordo di legno attorno alla pista.
+  const fence = new THREE.Mesh(
+    new THREE.ExtrudeGeometry(
+      (() => {
+        const outer = roundedRect(3.3, 2.3, 0.85) as THREE.Shape;
+        outer.holes.push(roundedRect(3.1, 2.1, 0.75, new THREE.Path()));
+        return outer;
+      })(),
+      { depth: 0.32, bevelEnabled: false },
+    ),
+    flat('#8a5a34'),
+  );
+  base.add(fence);
+
+  // Cacchetta sul rettilineo davanti.
+  const poop = new THREE.Group();
+  const brown = flat('#6b4524');
+  const a = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.25, 0.12, 8), brown);
+  const b = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.19, 0.12, 8), flat('#4d3119'));
+  const c = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.2, 8), brown);
+  a.position.y = 0.06;
+  b.position.y = 0.18;
+  c.position.y = 0.34;
+  poop.add(a, b, c);
+  poop.position.set(0.5, depth, 0.78);
+  spin.add(poop);
+  return { root: tilt, spin };
 }

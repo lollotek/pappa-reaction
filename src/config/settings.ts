@@ -23,6 +23,8 @@ export interface Settings {
   roundCount: number;
   /** Scaccia la palla: punti per vincere. */
   targetScore: number;
+  /** Corsa pazza: giri della gara. */
+  lapCount: number;
   /** Scaccia la palla: partita a tempo (poi vince chi è in testa). */
   timeLimit: boolean;
   keys: KeyPair[];
@@ -42,6 +44,7 @@ export interface Settings {
 
 export const ROUND_OPTIONS = [3, 5, 7] as const;
 export const TARGET_OPTIONS = [3, 5, 7] as const;
+export const LAP_OPTIONS = [3, 5, 9] as const;
 export const DIFFICULTIES = Object.keys(tuning.cpu) as Difficulty[];
 /** Tasti riservati ai menu e alle funzioni del gioco: non assegnabili ai gatti. */
 export const RESERVED_KEYS = ['Enter', 'Escape', 'KeyM', 'F3', 'Tab'];
@@ -59,6 +62,7 @@ export function defaultSettings(slots: readonly PlayerSlot[]): Settings {
     difficulty: 'normale',
     roundCount: tuning.round.count,
     targetScore: 5,
+    lapCount: 9,
     timeLimit: false,
     keys: slots.map((s) => ({ ...s.keys })),
     musicVolume: 7,
@@ -101,6 +105,9 @@ export function loadSettings(store: KeyValueStore | null, slots: readonly Player
     targetScore: TARGET_OPTIONS.includes(raw.targetScore as (typeof TARGET_OPTIONS)[number])
       ? (raw.targetScore as number)
       : def.targetScore,
+    lapCount: LAP_OPTIONS.includes(raw.lapCount as (typeof LAP_OPTIONS)[number])
+      ? (raw.lapCount as number)
+      : def.lapCount,
     timeLimit: typeof raw.timeLimit === 'boolean' ? raw.timeLimit : def.timeLimit,
     keys,
     musicVolume: volume(raw.musicVolume, def.musicVolume),

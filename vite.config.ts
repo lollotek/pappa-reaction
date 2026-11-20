@@ -8,6 +8,7 @@ const PAGES = {
   pappa: 'pappa/index.html',
   scaccia: 'scaccia/index.html',
   graffio: 'graffio/index.html',
+  corsa: 'corsa/index.html',
 };
 
 /** Genera dist/sw.js con l'elenco dei file della build (PWA offline, M10). */

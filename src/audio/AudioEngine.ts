@@ -23,7 +23,10 @@ export type SfxName =
   | 'wall'
   | 'jingle'
   | 'goal'
-  | 'go';
+  | 'go'
+  // Menu e hub: feedback dei tasti
+  | 'click'
+  | 'confirm';
 
 export type Mood = 'happy' | 'annoyed' | 'sad';
 
@@ -242,6 +245,13 @@ export class AudioEngine implements AudioOut {
         s.noiseBurst({ filter: 'lowpass', from: 500, dur: 0.12, vol: 0.25 });
         break;
       }
+      case 'click':
+        s.tone({ type: 'square', from: 1300, to: 950, dur: 0.035, vol: 0.07 });
+        break;
+      case 'confirm':
+        s.tone({ type: 'square', from: noteToFreq('C6'), dur: 0.05, vol: 0.08 });
+        s.tone({ type: 'square', from: noteToFreq('G6'), dur: 0.09, vol: 0.09, when: t + 0.05 });
+        break;
       case 'go':
         s.tone({ type: 'square', from: noteToFreq('C6'), dur: 0.08, vol: 0.1 });
         s.tone({ type: 'square', from: noteToFreq('G6'), dur: 0.18, vol: 0.12, when: t + 0.09 });

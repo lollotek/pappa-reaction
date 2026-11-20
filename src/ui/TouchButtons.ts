@@ -1,6 +1,10 @@
 import type { PlayerSlot } from '../config/controls';
 import type { PlayerAction } from '../core/MatchMachine';
+import type { Axis } from '../input/InputSource';
 import type { TouchButtonSpec } from '../input/touchLayout';
+
+/** Quanto del raggio percorre il cerchietto del joystick (il resto è margine). */
+const STICK_REACH = 0.62;
 
 interface ButtonEl {
   spec: TouchButtonSpec;
@@ -9,6 +13,8 @@ interface ButtonEl {
   pointers: Set<number>;
   /** Striscia: posizione dell'ultimo dito (0 = sinistra, 1 = destra), null se nessuno. */
   value: number | null;
+  /** Joystick: direzione tenuta (−1..1 per asse), null se nessun dito. */
+  axis: Axis | null;
   knob: HTMLElement | null;
 }
 
@@ -74,8 +80,18 @@ export class TouchButtons {
     this.buttons.forEach((b) => {
       b.pointers.clear();
       b.value = null;
+      b.axis = null;
       b.el.classList.remove('held');
     });
+  }
+
+  /** Direzione del joystick del giocatore, null se non c'è un dito (o non ha un joystick). */
+  stickAxis(player: number): Axis | null {
+    if (this.root.hidden) return null;
+    for (const b of this.buttons) {
+      if (b.spec.player === player && b.spec.action === 'stick') return b.axis;
+    }
+    return null;
   }
 
   /** Posizione del dito sulla striscia del giocatore (0..1), null se non c'è un dito. */
@@ -104,7 +120,9 @@ export class TouchButtons {
         ? `<span class="touch-label">${this.dashLabel}</span><span class="touch-name">${slot.name}</span>`
         : spec.action === 'move'
           ? '<span class="touch-knob"></span><span class="touch-label">◀ trascina ▶</span>'
-          : '<span class="touch-label">FINTA</span>';
+          : spec.action === 'stick'
+            ? '<span class="touch-knob"></span>'
+            : '<span class="touch-label">FINTA</span>';
     this.place(el, spec);
     this.root.appendChild(el);
     const b: ButtonEl = {
@@ -112,10 +130,27 @@ export class TouchButtons {
       el,
       pointers: new Set(),
       value: null,
+      axis: null,
       knob: el.querySelector<HTMLElement>('.touch-knob'),
     };
     // Striscia: la posizione del dito lungo la striscia, anche se scivola fuori.
     const track = (e: PointerEvent) => {
+      if (b.spec.action === 'stick') {
+        // Joystick: il cerchietto segue il dito dentro il cerchio grande.
+        const r = el.getBoundingClientRect();
+        const reach = Math.max(1, r.width / 2) * STICK_REACH;
+        let x = (e.clientX - (r.left + r.width / 2)) / reach;
+        let y = (e.clientY - (r.top + r.height / 2)) / reach;
+        const len = Math.hypot(x, y);
+        if (len > 1) {
+          x /= len;
+          y /= len;
+        }
+        b.axis = { x, y };
+        if (b.knob)
+          b.knob.style.transform = `translate(calc(-50% + ${x * 50 * STICK_REACH}%), calc(-50% + ${y * 50 * STICK_REACH}%))`;
+        return;
+      }
       if (b.spec.action !== 'move') return;
       const r = el.getBoundingClientRect();
       b.value = Math.min(1, Math.max(0, (e.clientX - r.left) / Math.max(1, r.width)));
@@ -130,7 +165,7 @@ export class TouchButtons {
       el.classList.add('held');
       track(e);
       const action = b.spec.action;
-      if (action !== 'move') this.onPress(b.spec.player, action, e.timeStamp);
+      if (action !== 'move' && action !== 'stick') this.onPress(b.spec.player, action, e.timeStamp);
       this.onHeldChange();
     });
     el.addEventListener('pointermove', (e) => {
@@ -141,6 +176,8 @@ export class TouchButtons {
       if (b.pointers.size === 0) {
         el.classList.remove('held');
         b.value = null;
+        b.axis = null;
+        if (b.spec.action === 'stick' && b.knob) b.knob.style.transform = '';
       }
       this.onHeldChange();
     };

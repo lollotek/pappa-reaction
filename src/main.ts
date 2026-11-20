@@ -61,11 +61,15 @@ function boot(root: HTMLElement): void {
     void import('./games/graffio/startGraffio').then(({ startGraffio }) =>
       startGraffio({ root, pixel, params, store: safeStorage(), hubUrl, debug }),
     );
+  } else if (route.game === 'corsa') {
+    void import('./games/corsa/startCorsa').then(({ startCorsa }) =>
+      startCorsa({ root, pixel, params, store: safeStorage(), hubUrl, debug }),
+    );
   } else {
     // Le scritte delle schede si disegnano col font del gioco: prima va caricato.
     const font = document.fonts?.load("700 16px 'Fredoka'").catch(() => []);
     void Promise.all([import('./hub/Hub'), font]).then(([{ Hub }]) =>
-      new Hub(root, pixel, route.base, debug).start(),
+      new Hub(root, pixel, route.base, debug, safeStorage()).start(),
     );
   }
 }

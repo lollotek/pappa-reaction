@@ -303,3 +303,15 @@ Regole: [GDD_GRAFFIO.md](GDD_GRAFFIO.md).
 - [x] Scena frontale con tiragraffi, tubi di cartone con tacca, taglio in due pezzi, lampo e sbuffo; HUD con i punti sulle colonne.
 - [x] Comandi touch a pulsante singolo (`singleLayout`, `touchControls: 'single'`), pagina `/graffio/`, scheda nell'hub (tre schede: layout e "Avvia" ritoccati).
 - [ ] Tarare soglie e velocità giocando; prova su dispositivi e controller veri.
+
+### Corsa pazza (M14) ✅ (2026-11-20, provato in browser e in emulazione touch: da provare su dispositivi veri)
+
+Regole: [GDD_CORSA.md](GDD_CORSA.md).
+
+- [x] Quarto gioco `/corsa/` e scheda nell'hub (pista con cacchetta); pagina `corsa/index.html` nella build.
+- [x] Logica pura e deterministica `src/games/corsa/core/CorsaMatch.ts` (passo fisso 120 Hz) e geometria della pista `track.ts`: giri, posizioni, cacchette (premi per posizione, riserva 3, stordimento, immunità propria), urti, ultimo giro. Test in `tests/corsa.test.ts`.
+- [x] CPU che segue una corsia, scansa e lascia cacchette (`ai/CorsaCpu.ts`), tre difficoltà.
+- [x] Scena nel giardino di Pappa (`Arena` con opzioni `dirt` e `decor`), pista di terra e steccati generati via codice.
+- [x] **Joystick virtuale** touch (`stickLayout`, azione `stick` in `TouchButtons`): la direzione si somma a tastiera e controller negli `axes` del frame.
+- [x] Opzione **giri** (3/5/9) nelle impostazioni comuni; tasti su/giù di Corsa pazza riempiti all'avvio se liberi (`games/corsa/keys.ts`).
+

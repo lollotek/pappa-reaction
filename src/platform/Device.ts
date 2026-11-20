@@ -59,10 +59,25 @@ export function isIosDevice(ua: string, maxTouchPoints: number): boolean {
   return /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && maxTouchPoints > 1);
 }
 
+/** Documento più esterno (la pagina dell'hub se siamo in un iframe, con lo stesso dominio). */
+function outerDocument(): Document {
+  try {
+    if (window.top && window.top !== window) return window.top.document;
+  } catch {
+    /* iframe di un altro dominio: vale il documento stesso */
+  }
+  return document;
+}
+
 export class Device {
   private wakeLock: WakeLockSentinelLike | null = null;
   private wantAwake = false;
-  private readonly doc = document as WebkitDocument;
+  /**
+   * Documento che va a schermo intero: quello più esterno. Il gioco aperto dall'hub
+   * sta in un iframe, ma lo schermo intero è della pagina dell'hub e resta
+   * mentre il gioco cambia.
+   */
+  private readonly doc: WebkitDocument = outerDocument() as WebkitDocument;
   private readonly nav = navigator as WakeLockNavigator;
   private installEvent: BeforeInstallPromptEvent | null = null;
 
@@ -85,12 +100,17 @@ export class Device {
     const onChange = () => {
       if (!this.isFullscreen) onFullscreenExit();
     };
-    document.addEventListener('fullscreenchange', onChange);
-    document.addEventListener('webkitfullscreenchange', onChange);
+    this.doc.addEventListener('fullscreenchange', onChange);
+    this.doc.addEventListener('webkitfullscreenchange', onChange);
     // Il wake lock viene rilasciato quando la pagina va in secondo piano: si richiede al ritorno.
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') void this.updateWakeLock();
     });
+  }
+
+  /** Documento su cui ascoltare i cambi di schermo intero. */
+  get fullscreenDocument(): Document {
+    return this.doc;
   }
 
   /** Il browser permette lo schermo intero di una pagina (no su iPhone). */
@@ -140,7 +160,7 @@ export class Device {
    */
   async enterFullscreen(): Promise<void> {
     if (!this.fullscreenSupported || this.isFullscreen) return;
-    const el = document.documentElement as WebkitElement;
+    const el = this.doc.documentElement as WebkitElement;
     try {
       if (el.requestFullscreen) await el.requestFullscreen({ navigationUI: 'hide' });
       else await el.webkitRequestFullscreen?.();
@@ -153,7 +173,7 @@ export class Device {
   async exitFullscreen(): Promise<void> {
     if (!this.isFullscreen) return;
     try {
-      if (document.exitFullscreen) await document.exitFullscreen();
+      if (this.doc.exitFullscreen) await this.doc.exitFullscreen();
       else await this.doc.webkitExitFullscreen?.();
     } catch {
       /* già uscito */

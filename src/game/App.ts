@@ -19,9 +19,16 @@ import {
   type InputSource,
 } from '../input/InputSource';
 import type { Keyboard } from '../input/Keyboard';
-import { singleLayout, stripLayout, touchLayout, type Insets } from '../input/touchLayout';
+import {
+  singleLayout,
+  stickLayout,
+  stripLayout,
+  touchLayout,
+  type Insets,
+} from '../input/touchLayout';
 import { BackButton } from '../platform/BackButton';
 import { Device, installMode } from '../platform/Device';
+import { MobileShell } from '../platform/MobileShell';
 import { diagnosticsLine } from '../platform/diagnostics';
 import { backToHub } from '../platform/navigation';
 import {
@@ -58,8 +65,18 @@ const MENU_KEYS: Record<string, MenuKey> = {
 const DEMO_RESTART_MS = 4000;
 
 /** Scritta sul pulsante principale e posizione dei comandi touch, per tipo di gioco. */
-const TOUCH_LABEL = { buttons: 'SCATTO', strip: 'SMASH', single: 'ZAMPATA' } as const;
-const TOUCH_LAYOUT = { buttons: touchLayout, strip: stripLayout, single: singleLayout } as const;
+const TOUCH_LABEL = {
+  buttons: 'SCATTO',
+  strip: 'SMASH',
+  single: 'ZAMPATA',
+  stick: 'CACCA',
+} as const;
+const TOUCH_LAYOUT = {
+  buttons: touchLayout,
+  strip: stripLayout,
+  single: singleLayout,
+  stick: stickLayout,
+} as const;
 
 export interface AppDeps<S extends GameSession> {
   container: HTMLElement;
@@ -99,7 +116,7 @@ export class App<S extends GameSession = GameSession> {
   private readonly buttonTest: ButtonTest;
   private readonly backButton: BackButton;
   private readonly device: Device;
-  private readonly rotateHint: HTMLElement;
+  private readonly shell: MobileShell;
   private readonly portrait = window.matchMedia?.('(orientation: portrait)');
   /** Modalità touch attiva (pulsanti a schermo, menu adattati). */
   private touchMode = false;
@@ -116,7 +133,11 @@ export class App<S extends GameSession = GameSession> {
   constructor(private readonly deps: AppDeps<S>) {
     this.settings = deps.settings;
     this.input = new MergedInput([deps.keyboard, this.touch]);
-    this.view = new MenuView(deps.container, () => this.afterMenuChange());
+    this.view = new MenuView(
+      deps.container,
+      () => this.afterMenuChange(),
+      (activated) => deps.audio.sfx(activated ? 'confirm' : 'click'),
+    );
     this.keyTest = new KeyTest(deps.container, deps.slots, () => this.showControls());
     this.touchButtons = new TouchButtons(
       deps.container,
@@ -136,11 +157,12 @@ export class App<S extends GameSession = GameSession> {
       () => this.autoPauseTouch(),
       () => this.refreshTitle(),
     );
-    this.rotateHint = document.createElement('div');
-    this.rotateHint.className = 'rotate-hint';
-    this.rotateHint.innerHTML =
-      '<div class="rotate-phone"></div><p>Ruota il dispositivo<br />in orizzontale</p>';
-    deps.container.appendChild(this.rotateHint);
+    // Avviso di rotazione, schermo intero al primo tocco e pulsante per forzarlo (come nell'hub).
+    this.shell = new MobileShell(deps.container, this.device, {
+      touch: () => this.touchMode,
+      auto: () => this.settings.fullscreen,
+      allowButton: () => this.mode !== 'match',
+    });
 
     this.logo = document.createElement('div');
     this.logo.className = 'title-logo';
@@ -187,6 +209,7 @@ export class App<S extends GameSession = GameSession> {
     // In verticale non si gioca: pausa (l'avviso "ruota il dispositivo" copre lo schermo).
     if (this.portrait?.matches) this.autoPauseTouch();
     this.updateTouchUi(realNow);
+    this.shell.update();
     if (this.session) {
       this.session.frame(realNow, this.mode === 'match' ? input : EMPTY);
       return;
@@ -216,7 +239,8 @@ export class App<S extends GameSession = GameSession> {
       const k = this.deps.keyboard.axis(p);
       const padIndex = humans.indexOf(p);
       const g = padIndex >= 0 ? this.gamepads.axis(padIndex) : { x: 0, y: 0 };
-      return { x: clamp(k.x + g.x), y: clamp(k.y + g.y) };
+      const t = this.touchButtons.stickAxis(p) ?? { x: 0, y: 0 };
+      return { x: clamp(k.x + g.x + t.x), y: clamp(k.y + g.y + t.y) };
     });
     return {
       presses: fromPads.length ? [...presses, ...fromPads].sort((a, b) => a.t - b.t) : presses,
@@ -240,7 +264,10 @@ export class App<S extends GameSession = GameSession> {
       if (pad.start && this.mode === 'paused') return this.resume();
       const keys: MenuKey[] = pad.start ? [...pad.menu, 'enter'] : pad.menu;
       // Una voce può cambiare schermata: i comandi dopo vanno al menu nuovo.
-      for (const key of keys) if (this.menu?.press(key)) this.afterMenuChange();
+      for (const key of keys) {
+        this.menuSound(key);
+        if (this.menu?.press(key)) this.afterMenuChange();
+      }
       return;
     }
     if (this.mode === 'match' && this.session) {
@@ -275,6 +302,7 @@ export class App<S extends GameSession = GameSession> {
       const key = MENU_KEYS[e.code];
       if (!key) return;
       e.preventDefault();
+      if (!e.repeat || key !== 'enter') this.menuSound(key);
       if (this.menu.press(key)) this.afterMenuChange();
       return;
     }
@@ -288,6 +316,11 @@ export class App<S extends GameSession = GameSession> {
       }
       if (e.code === 'Escape') this.pause();
     }
+  }
+
+  /** Click per ogni tasto dei menu, bip più pieno alla conferma. */
+  private menuSound(key: MenuKey): void {
+    this.deps.audio.sfx(key === 'enter' ? 'confirm' : 'click');
   }
 
   private afterMenuChange(): void {

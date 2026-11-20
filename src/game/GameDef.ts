@@ -68,8 +68,8 @@ export interface GameDef<S extends GameSession = GameSession> {
   title: string;
   /** Tasti dei gatti che il gioco usa, nell'ordine di Comandi e Prova tasti. */
   keyActions: readonly { action: KeyAction; label: string }[];
-  /** Comandi touch: SCATTO e FINTA, striscia da trascinare e SMASH, o un solo pulsante (ZAMPATA). */
-  touchControls: 'buttons' | 'strip' | 'single';
+  /** Comandi touch: SCATTO e FINTA, striscia da trascinare e SMASH, un solo pulsante (ZAMPATA) o joystick e CACCA. */
+  touchControls: 'buttons' | 'strip' | 'single' | 'stick';
   createSession(deps: SessionDeps, request: SessionRequest, realNow: number): S;
   /** Voci di "Nuova partita" proprie del gioco (dopo umano/CPU e difficoltà). */
   setupItems(s: SettingsAccess): MenuItem[];

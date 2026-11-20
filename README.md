@@ -7,6 +7,7 @@ Raccolta di minigiochi con quattro gatti, in Three.js. All'avvio si apre l'**hub
 | **Pappa Reaction**   | `/pappa/`   | giocabile |
 | **Scaccia la palla** | `/scaccia/` | giocabile |
 | **Graffio Killer**   | `/graffio/` | giocabile |
+| **Corsa pazza**      | `/corsa/`   | giocabile |
 
 Ogni gioco ha la sua pagina in un sottopercorso, con i propri parametri URL. Le impostazioni (volumi, tasti, pulsanti touch, schermo intero) sono le stesse per tutti i giochi. Dal titolo di un gioco **Torna all'hub** (o `ESC`, o l'Indietro di Android) riporta all'hub.
 
@@ -26,15 +27,22 @@ Quattro gatti su altrettanti tiragraffi: un tubo di cartone con una **tacca ross
 
 Un solo tasto per gatto (`Q` `T` `O` `↑`); su telefono e tablet un pulsante ZAMPATA. Parametri URL come gli altri (`/graffio/?cpu=2,3,4&diff=difficile&seed=1`).
 
+## Corsa pazza
+
+Quattro gatti corrono 9 giri (3, 5 o 9) su una pista di terra battuta nel giardino. Si guida con le **quattro direzioni**; a ogni traguardo chi è dietro riceve **cacchette** da lasciare in pista (0 al primo, 1, 2 e 3 all'ultimo, al massimo 3 in riserva): chi pesta quelle di un altro si ferma a fare la faccia schifata. Nell'ultimo giro tutti caricano più veloci. Regole complete nel [GDD di Corsa pazza](docs/GDD_CORSA.md).
+
+Tasti predefiniti (su, giù, sinistra, destra, cacchetta): Priamo `S` `D` `Z` `X` `Q` · Tempesta `H` `N` `V` `B` `T` · Poh `K` `;` `,` `.` `O` · Mariù `'` `/` `←` `→` `↑`. Su telefono e tablet: joystick virtuale e pulsante CACCA. Parametri URL come gli altri (`/corsa/?cpu=2,3,4&diff=difficile&seed=1`).
+
 ## Controller
 
-In tutti e due i giochi e nell'hub funzionano i controller (Gamepad API): il primo controller comanda il primo gatto umano, il secondo il secondo, e così via. Levetta o croce per muoversi e per i menu, **A** (o RB/RT) scatto/smash e conferma, **B** (o X/LB/LT) finta e indietro, **START** pausa.
+In tutti i giochi e nell'hub funzionano i controller (Gamepad API): il primo controller comanda il primo gatto umano, il secondo il secondo, e così via. Levetta o croce per muoversi e per i menu, **A** (o RB/RT) scatto/smash e conferma, **B** (o X/LB/LT) finta e indietro, **START** pausa.
 
 ## Documentazione
 
 - [Game Design Document](docs/GDD.md) — Pappa Reaction: regole, meccaniche, controlli, CPU, stile
 - [GDD di Scaccia la palla](docs/GDD_SCACCIA.md) — campo, palline, punti, smash ed effetto, CPU
 - [GDD di Graffio Killer](docs/GDD_GRAFFIO.md) — tubi, tacca, giudizio della zampata, CPU
+- [GDD di Corsa pazza](docs/GDD_CORSA.md) — pista, giri, cacchette, urti, CPU
 - [Roadmap tecnica](docs/ROADMAP.md) — stack, architettura, milestone
 - [Domande aperte](docs/DOMANDE_APERTE.md) — decisioni ancora da prendere
 - [Riferimenti grafici](docs/reference/) — foto dei gatti
